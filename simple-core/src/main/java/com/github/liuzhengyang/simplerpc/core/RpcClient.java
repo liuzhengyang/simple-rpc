@@ -50,9 +50,6 @@ public class RpcClient {
 								.addLast(new ResponseCodec())
 								.addLast(new RpcClientHandler())
 								.addLast(new RequestCodec())
-
-//								.addLast(new LengthFieldPrepender(4))
-//						.addLast(new LengthFieldBasedFrameDecoder(10000, 0, 4))
 						;
 					}
 				});
@@ -70,6 +67,7 @@ public class RpcClient {
 		request.setMethod(method.getName());
 		request.setParams(args);
 		request.setClazz(clazz);
+		request.setParameterTypes(method.getParameterTypes());
 		this.channel.writeAndFlush(request);
 		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 		responseMap.put(request.getRequestId(), blockingQueue);

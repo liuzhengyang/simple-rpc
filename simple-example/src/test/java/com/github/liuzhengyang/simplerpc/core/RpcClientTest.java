@@ -1,6 +1,6 @@
 package com.github.liuzhengyang.simplerpc.core;
 
-import com.github.liuzhengyang.simplerpc.core.example.IHello;
+import com.github.liuzhengyang.simplerpc.example.IHello;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -20,8 +20,8 @@ public class RpcClientTest {
 		IHello ihello = rpcClient.newProxy(IHello.class);
 		String nihaoya = ihello.say("nihaoya");
 		System.out.println(nihaoya);
-		Thread.sleep(100000);
-//		rpcClient.destroy();
+		System.out.println(ihello.sum(2, 4));
+		rpcClient.destroy();
 	}
 
 	@Test

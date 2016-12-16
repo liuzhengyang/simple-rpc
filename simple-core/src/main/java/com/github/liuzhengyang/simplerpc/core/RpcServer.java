@@ -45,8 +45,6 @@ public class RpcServer {
 					protected void initChannel(SocketChannel ch) throws Exception {
 						ch.pipeline()
 								.addLast(new LoggingHandler(LogLevel.INFO))
-//								.addLast(new LengthFieldBasedFrameDecoder(100000, 0, 4))
-//								.addLast(new LengthFieldPrepender(4))
 								.addLast(new RequestCodec())
 								.addLast(new RpcServerHandler(serviceImpl))
 								.addLast(new ResponseCodec())
@@ -66,5 +64,4 @@ public class RpcServer {
 			workerGroup.shutdownGracefully();
 		}
 	}
-
 }

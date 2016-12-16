@@ -1,4 +1,4 @@
-package com.github.liuzhengyang.simplerpc.core.example;
+package com.github.liuzhengyang.simplerpc.example;
 
 /**
  * Description:
@@ -10,4 +10,7 @@ package com.github.liuzhengyang.simplerpc.core.example;
 public interface IHello {
 
 	String say(String hello);
+
+	int sum(int a, int b);
+	int sum(Integer a, Integer b);
 }

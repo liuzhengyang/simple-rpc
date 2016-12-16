@@ -1,9 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core;
 
-import com.github.liuzhengyang.simplerpc.core.example.HelloImpl;
+import com.github.liuzhengyang.simplerpc.example.HelloImpl;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Description:
