@@ -9,4 +9,5 @@ package com.github.liuzhengyang.simplerpc.core;
  */
 public interface Registry {
 	void registerService(String service, String ip, int port);
+
 }

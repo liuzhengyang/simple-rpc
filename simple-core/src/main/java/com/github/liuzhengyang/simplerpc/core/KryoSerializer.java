@@ -19,9 +19,19 @@ import io.protostuff.runtime.RuntimeSchema;
 public class KryoSerializer {
 	public static byte[] serialize(Object obj){
 		Kryo kryo = new Kryo();
-		ByteOutputStream byteOutputStream = new ByteOutputStream();
+		ByteOutputStream byteOutputStream = new ByteOutputStream(1024);
 		Output output = new Output(byteOutputStream);
 		kryo.writeObject(output, obj);
+		output.close();
+		return byteOutputStream.getBytes();
+	}
+
+	public static byte[] serializeObjectAndClass(Object obj){
+		Kryo kryo = new Kryo();
+		ByteOutputStream byteOutputStream = new ByteOutputStream();
+		Output output = new Output(byteOutputStream);
+		kryo.writeClassAndObject(output, obj);
+		output.close();
 		return byteOutputStream.getBytes();
 	}
 
@@ -30,6 +40,14 @@ public class KryoSerializer {
 		Kryo kryo = new Kryo();
 		ByteInputStream byteInputStream = new ByteInputStream(bytes, bytes.length);
 		Input input = new Input(byteInputStream);
+		input.close();
 		return kryo.readObject(input, clazz);
+	}
+
+	public static <T> T deserialize(byte[] bytes) {
+		Kryo kryo = new Kryo();
+		ByteInputStream byteInputStream = new ByteInputStream(bytes, bytes.length);
+		Input input = new Input(byteInputStream);
+		return (T) kryo.readClassAndObject(input);
 	}
 }
