@@ -5,6 +5,7 @@ RCP BASED ON NETTY
 # 内部结构
 * IO netty
 * Serialize protostuff, kryo
+* Optional Zookeeper For Service Discovery
 
 
 ## 使用示例
