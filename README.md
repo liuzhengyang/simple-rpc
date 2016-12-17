@@ -7,12 +7,14 @@ RCP BASED ON NETTY
 * Serialize protostuff, kryo
 * Optional Zookeeper For Service Discovery
 
+# 消息协议
+当前采用简单的在消息体前加上4byte的消息长度值
 
 ## 使用示例
 ```
 // 服务接口
 public interface IHello {
-
+`
     String say(String hello);
 
     int sum(int a, int b);
