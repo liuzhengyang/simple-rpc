@@ -2,6 +2,11 @@
 
 RCP BASED ON NETTY
 
+# 内部结构
+* IO netty
+* Serialize protostuff, kryo
+
+
 ## 使用示例
 ```
 // 服务接口

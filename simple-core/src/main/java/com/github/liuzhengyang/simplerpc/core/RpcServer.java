@@ -1,5 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core;
 
+import com.github.liuzhengyang.simplerpc.core.lb.RegisterUtil;
+import com.github.liuzhengyang.simplerpc.core.util.InetUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -54,6 +56,7 @@ public class RpcServer {
 		try {
 			ChannelFuture sync = bootstrap.bind(port).sync();
 			LOGGER.info("Server Started At {}", port);
+			RegisterUtil.Register(serviceImpl.getClass().getName(), InetUtil.getLocalIp(), port);
 			started = true;
 			this.channel = sync.channel();
 			sync.channel().closeFuture().sync();

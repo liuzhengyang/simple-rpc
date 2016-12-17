@@ -1,4 +1,6 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.lb;
+
+import com.github.liuzhengyang.simplerpc.core.RpcClient;
 
 /**
  * Description:
