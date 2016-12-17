@@ -1,6 +1,6 @@
 # simple-rpc
 
-RCP BASED ON NETTY
+RPC BASED ON NETTY
 
 # 内部结构
 * IO netty
