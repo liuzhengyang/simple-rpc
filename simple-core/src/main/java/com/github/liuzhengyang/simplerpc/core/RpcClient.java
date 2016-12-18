@@ -76,6 +76,8 @@ public class RpcClient {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return null;
+		} finally {
+			responseMap.remove(request.getRequestId());
 		}
 	}
 

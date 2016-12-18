@@ -5,12 +5,18 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceInstanceBuilder;
+import org.apache.curator.x.discovery.ServiceProvider;
+import org.apache.curator.x.discovery.ServiceProviderBuilder;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
+import org.apache.curator.x.discovery.details.ServiceCacheListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +31,8 @@ import java.util.List;
  */
 // TODO curator discovery 是否会自动在机器停止后删除节点
 public class ZKRegisterImpl implements Registry{
+	private static final Logger LOGGER = LoggerFactory.getLogger(ZKRegisterImpl.class);
+
 	private CuratorFramework curatorFramework ;
 	private ServiceDiscovery<com.github.liuzhengyang.simplerpc.core.lb.Endpoint> serviceDiscovery;
 	public ZKRegisterImpl() {
@@ -33,6 +41,7 @@ public class ZKRegisterImpl implements Registry{
 		curatorFramework.start();
 		serviceDiscovery = ServiceDiscoveryBuilder.builder(Endpoint.class).client(curatorFramework).serializer(serializer)
 				.basePath("services").build();
+		ServiceProvider serviceProvider = serviceDiscovery.serviceProviderBuilder().build();
 	}
 	public void registerService(String service, Endpoint endpoint) {
 		try {
@@ -58,5 +67,17 @@ public class ZKRegisterImpl implements Registry{
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private class CacheListener implements ServiceCacheListener {
+
+		public void cacheChanged() {
+			LOGGER.info("Changed {}, {}");
+
+		}
+
+		public void stateChanged(CuratorFramework client, ConnectionState newState) {
+			LOGGER.info("Changed {}, {}", client, newState);
+		}
 	}
 }
