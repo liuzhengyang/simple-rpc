@@ -22,4 +22,10 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Response>{
 		BlockingQueue<Response> blockingQueue = RpcClient.responseMap.get(msg.getRequestId());
 		blockingQueue.put(msg);
 	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		LOGGER.error("Exception caught on {}, ", ctx.channel(), cause);
+		ctx.channel().close();
+	}
 }
