@@ -29,5 +29,6 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Response>{
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		LOGGER.error("Exception caught on {}, ", ctx.channel(), cause);
 		ctx.channel().close();
+		// TODO retry reconnect
 	}
 }
