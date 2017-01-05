@@ -7,6 +7,15 @@ RPC BASED ON NETTY
 * Serialize protostuff, kryo
 * Optional Zookeeper For Service Discovery
 
+# 现有功能
+* 基本的客户端、服务端交互
+* 提供代理实现接口
+
+# TODO
+* spring 结合
+* 连接池
+* 服务注册发布功能
+
 # 消息协议
 当前采用简单的在消息体前加上4byte的消息长度值
 

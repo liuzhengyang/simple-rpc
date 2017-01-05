@@ -3,11 +3,9 @@ package com.github.liuzhengyang.simplerpc.core;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
-import io.protostuff.LinkedBuffer;
-import io.protostuff.ProtostuffIOUtil;
-import io.protostuff.runtime.RuntimeSchema;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 
 /**
  * Description:
@@ -17,28 +15,28 @@ import io.protostuff.runtime.RuntimeSchema;
  * @since 2016-12-16
  */
 public class KryoSerializer {
-	public static byte[] serialize(Object obj){
+	public static byte[] serialize(Object obj) {
 		Kryo kryo = new Kryo();
-		ByteOutputStream byteOutputStream = new ByteOutputStream(1024);
+		ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream(1024);
 		Output output = new Output(byteOutputStream);
 		kryo.writeObject(output, obj);
 		output.close();
-		return byteOutputStream.getBytes();
+		return byteOutputStream.toByteArray();
 	}
 
-	public static byte[] serializeObjectAndClass(Object obj){
+	public static byte[] serializeObjectAndClass(Object obj) {
 		Kryo kryo = new Kryo();
-		ByteOutputStream byteOutputStream = new ByteOutputStream();
+		ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
 		Output output = new Output(byteOutputStream);
 		kryo.writeClassAndObject(output, obj);
 		output.close();
-		return byteOutputStream.getBytes();
+		return byteOutputStream.toByteArray();
 	}
 
 
 	public static <T> T deserialize(Class<T> clazz, byte[] bytes) {
 		Kryo kryo = new Kryo();
-		ByteInputStream byteInputStream = new ByteInputStream(bytes, bytes.length);
+		ByteArrayInputStream byteInputStream = new ByteArrayInputStream(bytes);
 		Input input = new Input(byteInputStream);
 		input.close();
 		return kryo.readObject(input, clazz);
@@ -46,7 +44,7 @@ public class KryoSerializer {
 
 	public static <T> T deserialize(byte[] bytes) {
 		Kryo kryo = new Kryo();
-		ByteInputStream byteInputStream = new ByteInputStream(bytes, bytes.length);
+		ByteArrayInputStream byteInputStream = new ByteArrayInputStream(bytes);
 		Input input = new Input(byteInputStream);
 		return (T) kryo.readClassAndObject(input);
 	}
