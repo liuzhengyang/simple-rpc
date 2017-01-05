@@ -59,12 +59,13 @@ public class RpcServer {
 			RegisterUtil.Register(serviceImpl.getClass().getName(), InetUtil.getLocalIp(), port);
 			started = true;
 			this.channel = sync.channel();
-			sync.channel().closeFuture().sync();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} finally {
-			bossGroup.shutdownGracefully();
-			workerGroup.shutdownGracefully();
 		}
+	}
+
+	public void stop() {
+		bossGroup.shutdownGracefully();
+		workerGroup.shutdownGracefully();
 	}
 }
