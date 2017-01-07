@@ -1,5 +1,8 @@
 package com.github.liuzhengyang.simplerpc.core;
 
+import com.github.liuzhengyang.simplerpc.api.Serializer;
+import com.github.liuzhengyang.simplerpc.serializer.*;
+import com.github.liuzhengyang.simplerpc.serializer.KryoSerializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
@@ -18,9 +21,11 @@ import java.util.List;
 public class ResponseCodec extends ByteToMessageCodec<Response>{
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResponseCodec.class);
 
+	private Serializer serializer = new KryoSerializer();
+
 	protected void encode(ChannelHandlerContext ctx, Response msg, ByteBuf out) throws Exception {
 		LOGGER.info("Encode {}", msg);
-		byte[] bytes = Serializer.serialize(msg);
+		byte[] bytes = serializer.serialize(msg);
 		int length = bytes.length;
 		out.writeInt(length);
 		ByteBuf byteBuf = out.writeBytes(bytes);
@@ -30,7 +35,7 @@ public class ResponseCodec extends ByteToMessageCodec<Response>{
 		int length = in.readInt();
 		byte[] buffer = new byte[length];
 		in.readBytes(buffer);
-		Response response = Serializer.deserialize(Response.class, buffer);
+		Response response = serializer.deserialize(Response.class, buffer);
 		out.add(response);
 		LOGGER.info("Decode Result: {}", response);
 	}

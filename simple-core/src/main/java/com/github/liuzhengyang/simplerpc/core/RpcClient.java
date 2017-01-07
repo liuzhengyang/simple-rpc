@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @version 1.0
  * @since 2016-12-16
  */
-public class RpcClient {
+public class RpcClient implements IRpcClient{
 	private static AtomicLong atomicLong = new AtomicLong();
 	private String serverIp;
 	private int port;
@@ -98,6 +98,10 @@ public class RpcClient {
 		} finally {
 			eventLoopGroup.shutdownGracefully();
 		}
+	}
+
+	public void notifyEvent(NotifyEvent notifyEvent) {
+
 	}
 
 }

@@ -15,6 +15,8 @@ public class RpcServerTest {
 	public void init() throws Exception {
 		RpcServer rpcServer = new RpcServer(8090, new HelloImpl());
 		rpcServer.init();
+
+		Thread.sleep(30 * 1000);
 	}
 
 }
