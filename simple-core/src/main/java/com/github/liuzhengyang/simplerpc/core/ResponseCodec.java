@@ -1,11 +1,13 @@
 package com.github.liuzhengyang.simplerpc.core;
 
 import com.github.liuzhengyang.simplerpc.api.Serializer;
+import com.github.liuzhengyang.simplerpc.common.Constants;
 import com.github.liuzhengyang.simplerpc.serializer.*;
 import com.github.liuzhengyang.simplerpc.serializer.KryoSerializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
+import io.netty.handler.codec.TooLongFrameException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,9 @@ public class ResponseCodec extends ByteToMessageCodec<Response>{
 
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		int length = in.readInt();
+		if (length > Constants.MAX_FRAME_LENGTH) {
+			throw new TooLongFrameException();
+		}
 		byte[] buffer = new byte[length];
 		in.readBytes(buffer);
 		Response response = serializer.deserialize(Response.class, buffer);
