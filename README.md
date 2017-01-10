@@ -5,14 +5,14 @@ RPC BASED ON NETTY
 # 内部结构
 * IO netty
 * Serialize protostuff, kryo
-* Optional Zookeeper For Service Discovery
+* Use Zookeeper For Service Discovery
 
 # 现有功能
 * 基本的客户端、服务端交互
 * 提供代理实现接口
 
 # RoadMap
-* 服务发布订阅
+* 服务发布订阅 DONE
 * 服务心跳检测
 * spring 结合
 * 连接池
