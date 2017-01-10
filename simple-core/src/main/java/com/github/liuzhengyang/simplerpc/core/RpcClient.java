@@ -17,7 +17,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseMap;
 
 /**
  * Description:
@@ -30,10 +33,8 @@ public class RpcClient implements IRpcClient{
 	private static AtomicLong atomicLong = new AtomicLong();
 	private String serverIp;
 	private int port;
-	private boolean started;
 	private Channel channel;
-	EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
-	public static ConcurrentMap<Long, BlockingQueue<Response>> responseMap = new ConcurrentHashMap<Long, BlockingQueue<Response>>();
+	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 
 	public RpcClient(String serverIp, int port) {
 		this.serverIp = serverIp;
@@ -72,7 +73,7 @@ public class RpcClient implements IRpcClient{
 		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 		responseMap.put(request.getRequestId(), blockingQueue);
 		try {
-			return blockingQueue.take();
+			return blockingQueue.poll(10, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return null;

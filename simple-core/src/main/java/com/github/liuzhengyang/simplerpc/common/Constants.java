@@ -9,4 +9,6 @@ package com.github.liuzhengyang.simplerpc.common;
  */
 public class Constants {
 	public static final int MAX_FRAME_LENGTH = 1024 * 1024; // 1MB
+
+	public static final String ZK_BASE_PATH = "/simplerpc";
 }

@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 
+import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseMap;
+
 /**
  * Description:
  *
@@ -21,7 +23,7 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Response>{
 
 	protected void channelRead0(ChannelHandlerContext ctx, Response msg) throws Exception {
 		LOGGER.info("Receive {}", msg);
-		BlockingQueue<Response> blockingQueue = RpcClient.responseMap.get(msg.getRequestId());
+		BlockingQueue<Response> blockingQueue = responseMap.get(msg.getRequestId());
 		blockingQueue.put(msg);
 	}
 
