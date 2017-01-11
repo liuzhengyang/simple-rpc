@@ -13,12 +13,12 @@ Running in some business online.
 # 现有功能
 * 基本的客户端、服务端交互
 * 提供代理实现接口
+* spring 集成, xml配置和Java Config配置方式
+* 服务发布订阅 DONE
+* 断线重连 DONE
 
 # RoadMap
-* 服务发布订阅 DONE
 * 服务心跳检测
-* 断线重连 DONE
-* spring 结合
 * 连接池
 * 服务注册发布功能
 * 服务管理、监控
@@ -55,27 +55,24 @@ public class HelloImpl implements IHello {
 
 }
 
-// 服务端代码
-public class RpcServerTest {
-    @Test
-    public void init() throws Exception {
-        RpcServer rpcServer = new RpcServer(8090, new HelloImpl());
-        rpcServer.init();
-    }
+// 客户端代码
+// beanJavaConfig方式
+@Bean
+	public CountService countService() {
+		RpcClientWithLB rpcClientWithLB = new RpcClientWithLB("fyes-counter");
+		rpcClientWithLB.setZkConn("10.4.105.252:2181");
+		rpcClientWithLB.init();
+		CountService countService = rpcClientWithLB.newProxy(CountService.class);
+		return countService;
+	}
+	
+// 服务端发布
+// xml配置方式
+<bean class="com.github.liuzhengyang.simplerpc.ServerFactoryBean" init-method="start">
+        <property name="serviceInterface" value="com.test.liuzhengyang.CountService"/>
+        <property name="port" value="8888"/>
+        <property name="serviceName" value="fyes-counter"/>
+        <property name="serviceImpl" ref="countServiceImpl"/>
+        <property name="zkConn" value="127.0.0.1:2181"/>
 
-}
-// 客户端调用
-public class RpcClientTest {
-    @Test
-    public void init() throws Exception {
-        RpcClient rpcClient = new RpcClient("127.0.0.1", 8090);
-        rpcClient.init();
-        IHello ihello = rpcClient.newProxy(IHello.class);
-        String nihaoya = ihello.say("nihaoya");
-        System.out.println(nihaoya);
-        System.out.println(ihello.sum(2, 4));
-        rpcClient.destroy();
-    }
-
-}
 ```
