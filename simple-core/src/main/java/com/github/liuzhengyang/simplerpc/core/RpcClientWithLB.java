@@ -99,6 +99,7 @@ public class RpcClientWithLB implements IRpcClient {
 
 
 		// TODO 这段代码需要仔细检查重构整理
+		// 注册中心不可用时,保存本地缓存
 		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
 
@@ -146,35 +147,6 @@ public class RpcClientWithLB implements IRpcClient {
 				}
 			}
 
-//			children.usingWatcher(new CuratorWatcher() {
-//				public void process(WatchedEvent event) throws Exception {
-//					Watcher.Event.EventType type = event.getType();
-//					if (type == Watcher.Event.EventType.NodeChildrenChanged) {
-//						String path = event.getPath();
-//						if (serviceZKPath.equals(path)) {
-//							List<String> newServiceData = children.forPath(serviceZKPath);
-//							LOGGER.info("Server {} list change {}", serviceName, newServiceData);
-//							if (CollectionUtils.isNotEmpty(newServiceData)) {
-//								// 关闭删除本地缓存中多出的channel
-//								for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
-//									String key = entry.getKey();
-//									Channel value = entry.getValue();
-//									if (!newServiceData.contains(key)) {
-//										value.close();
-//										channelMap.remove(key, value);
-//									}
-//								}
-//
-//								for (String connStr : newServiceData) {
-//									if (!channelMap.containsKey(connStr)) {
-//										addNewChannel(connStr);
-//									}
-//								}
-//							}
-//						}
-//					}
-//				}
-//			});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -312,6 +284,7 @@ public class RpcClientWithLB implements IRpcClient {
 
 	}
 
+	// 启动一个后台任务, 定期检查服务器
 
 	// TODO add jvm shutdown hook
 
