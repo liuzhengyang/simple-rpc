@@ -1,6 +1,7 @@
 package com.github.liuzhengyang.simplerpc;
 
 import com.github.liuzhengyang.simplerpc.core.RpcServer;
+import com.github.liuzhengyang.simplerpc.core.RpcServerWithLB;
 import org.springframework.beans.factory.FactoryBean;
 
 /**
@@ -10,19 +11,19 @@ import org.springframework.beans.factory.FactoryBean;
  * @version 1.0
  * @since 2017-01-05
  */
-public class ServerFactoryBean implements FactoryBean<RpcServer> {
+public class ServerFactoryBean implements FactoryBean<Object> {
 
 	// 远程调用的接口
 	private Class<?> serviceInterface;
 	private Object serviceImpl;
 	private String ip;
 	private int port;
-	private RpcServer rpcServer;
+	private String serviceName;
+	private RpcServerWithLB rpcServer;
 
-
-	public RpcServer getObject() throws Exception {
-		rpcServer = new RpcServer(port, serviceImpl);
-		return rpcServer;
+	public Object getObject() throws Exception {
+		rpcServer = new RpcServerWithLB(port, serviceImpl, serviceName);
+		return this;
 	}
 
 	public void start() {
@@ -75,11 +76,19 @@ public class ServerFactoryBean implements FactoryBean<RpcServer> {
 		this.serviceImpl = serviceImpl;
 	}
 
-	public RpcServer getRpcServer() {
+	public String getServiceName() {
+		return serviceName;
+	}
+
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
+	}
+
+	public RpcServerWithLB getRpcServer() {
 		return rpcServer;
 	}
 
-	public void setRpcServer(RpcServer rpcServer) {
+	public void setRpcServer(RpcServerWithLB rpcServer) {
 		this.rpcServer = rpcServer;
 	}
 }

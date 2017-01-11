@@ -1,6 +1,7 @@
 package com.github.liuzhengyang.simplerpc;
 
 import com.github.liuzhengyang.simplerpc.core.RpcClient;
+import com.github.liuzhengyang.simplerpc.core.RpcClientWithLB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
@@ -16,11 +17,12 @@ public class ClientFactoryBean<T> implements FactoryBean<T> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ClientFactoryBean.class);
 
 	private Class<T> serviceInterface;
-	private String ip;
-	private int port;
+	private String serviceName;
+	private String zkConn;
 
 	public T getObject() {
-		RpcClient rpcClient = new RpcClient(ip, port);
+		RpcClientWithLB rpcClient = new RpcClientWithLB(serviceName);
+		rpcClient.setZkConn(zkConn);
 		rpcClient.init();
 
 		return rpcClient.newProxy(serviceInterface);
@@ -42,19 +44,19 @@ public class ClientFactoryBean<T> implements FactoryBean<T> {
 		this.serviceInterface = serviceInterface;
 	}
 
-	public String getIp() {
-		return ip;
+	public String getServiceName() {
+		return serviceName;
 	}
 
-	public void setIp(String ip) {
-		this.ip = ip;
+	public void setServiceName(String serviceName) {
+		this.serviceName = serviceName;
 	}
 
-	public int getPort() {
-		return port;
+	public String getZkConn() {
+		return zkConn;
 	}
 
-	public void setPort(int port) {
-		this.port = port;
+	public void setZkConn(String zkConn) {
+		this.zkConn = zkConn;
 	}
 }

@@ -38,6 +38,7 @@ public class RpcServerWithLB {
 	private Channel channel;
 	private Object serviceImpl;
 	private String serviceName;
+	private String zkConn;
 
 	private EventLoopGroup bossGroup = new NioEventLoopGroup();
 	private EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -49,8 +50,32 @@ public class RpcServerWithLB {
 		this.serviceName = serviceName;
 	}
 
+	public String getZkConn() {
+		return zkConn;
+	}
+
+	public void setZkConn(String zkConn) {
+		this.zkConn = zkConn;
+	}
+
+	public String getIp() {
+		return ip;
+	}
+
+	public void setIp(String ip) {
+		this.ip = ip;
+	}
+
+	public Channel getChannel() {
+		return channel;
+	}
+
+	public void setChannel(Channel channel) {
+		this.channel = channel;
+	}
+
 	public void init() {
-		String zkConn = Config.getZKConnStr();
+		String zkConn = getZkConn();
 		String localIp = InetUtil.getLocalIp();
 		String ipPortStr = localIp + ":" + port;
 		curatorFramework = CuratorFrameworkFactory.newClient(zkConn, new ExponentialBackoffRetry(1000, 3));

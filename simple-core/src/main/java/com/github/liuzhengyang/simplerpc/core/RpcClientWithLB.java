@@ -52,9 +52,8 @@ public class RpcClientWithLB implements IRpcClient{
 	private static AtomicLong atomicLong = new AtomicLong();
 	// 发布的服务名称,用来寻找对应的服务提供者
 	private String serviceName;
-	private String serverIp;
-	private int port;
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
+	private String zkConn;
 	// 存放字符串Channel对应的map
 	private ConcurrentMap<String, Channel> channelMap = new ConcurrentHashMap<String, Channel>();
 	private static class ChannelWrapper {
@@ -79,16 +78,24 @@ public class RpcClientWithLB implements IRpcClient{
 
 
 	}
-	private List<ChannelWrapper> channelWrapperList = new ArrayList<ChannelWrapper>();
 
 	public RpcClientWithLB(String serviceName) {
 		this.serviceName = serviceName;
 	}
 
+
+	public String getZkConn() {
+		return zkConn;
+	}
+
+	public void setZkConn(String zkConn) {
+		this.zkConn = zkConn;
+	}
+
 	public void init() {
 
 
-		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(Config.getZKConnStr(), new ExponentialBackoffRetry(1000, 3));
+		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
 		final GetChildrenBuilder children = curatorFramework.getChildren();
 		try {
