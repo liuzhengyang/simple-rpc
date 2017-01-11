@@ -7,13 +7,16 @@ RPC BASED ON NETTY
 * Serialize protostuff, kryo
 * Use Zookeeper For Service Discovery
 
+![rpc-architecture](http://oek9m2h2f.bkt.clouddn.com/rpc.png)
+
 # 现有功能
 * 基本的客户端、服务端交互
 * 提供代理实现接口
 
 # RoadMap
 * 服务发布订阅 DONE
-* 服务心跳检测, 断线重连
+* 服务心跳检测
+* 断线重连 DONE
 * spring 结合
 * 连接池
 * 服务注册发布功能

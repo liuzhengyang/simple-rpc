@@ -13,4 +13,5 @@ import lombok.Data;
 public class Response {
 	private long requestId;
 	private Object response;
+	private Throwable throwable;
 }

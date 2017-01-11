@@ -4,7 +4,9 @@ import com.google.common.base.Splitter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -24,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -175,7 +179,7 @@ public class RpcClientWithLB implements IRpcClient {
 		}
 	}
 
-	private Channel getNewChannel(String serverIp, int port) {
+	private Channel getNewChannel(final String serverIp, final int port) {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.channel(NioSocketChannel.class)
 				.group(eventLoopGroup)
@@ -191,10 +195,17 @@ public class RpcClientWithLB implements IRpcClient {
 					}
 				});
 		try {
-			ChannelFuture f = bootstrap.connect(serverIp, port).sync();
+			ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000).connect(serverIp, port).sync();
 			Channel channel = f.channel();
 			String connStr = serverIp + ":" + port;
 			channelMap.put(connStr, channel);
+			channel.closeFuture().addListener(new ChannelFutureListener() {
+				public void operationComplete(ChannelFuture future) throws Exception {
+					Thread.sleep(1000);
+					LOGGER.info("Reconnect {} {}", serverIp, port);
+					addNewChannel(serverIp + ":" + port);
+				}
+			});
 			return channel;
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -202,14 +213,35 @@ public class RpcClientWithLB implements IRpcClient {
 		return null;
 	}
 
-	private void addNewChannel(String connStr) {
-		List<String> strings = Splitter.on(":").splitToList(connStr);
-		if (strings.size() != 2) {
-			throw new RuntimeException("Error connection str " + connStr);
+	private Channel reconnect(Channel channel) {
+		Channel result = null;
+		while(result == null) {
+			InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
+			String hostAddress = socketAddress.getAddress().getHostAddress();
+			int port = socketAddress.getPort();
+			result = addNewChannel(hostAddress + ":" + port);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
-		String host = strings.get(0);
-		int port = Integer.parseInt(strings.get(1));
-		getNewChannel(host, port);
+		return result;
+	}
+
+	private Channel addNewChannel(String connStr) {
+		try {
+			List<String> strings = Splitter.on(":").splitToList(connStr);
+			if (strings.size() != 2) {
+				throw new RuntimeException("Error connection str " + connStr);
+			}
+			String host = strings.get(0);
+			int port = Integer.parseInt(strings.get(1));
+			return getNewChannel(host, port);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public Response sendMessage(Class<?> clazz, Method method, Object[] args) {
@@ -220,6 +252,15 @@ public class RpcClientWithLB implements IRpcClient {
 		request.setClazz(clazz);
 		request.setParameterTypes(method.getParameterTypes());
 		Channel channel = selectChannel();
+		if (channel == null) {
+			Response response = new Response();
+			RuntimeException runtimeException = new RuntimeException("Channel is not active now");
+			response.setThrowable(runtimeException);
+			return response;
+		}
+		if (!channel.isActive()) {
+			channel = reconnect(channel);
+		}
 		channel.writeAndFlush(request);
 		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 		responseMap.put(request.getRequestId(), blockingQueue);
@@ -237,7 +278,7 @@ public class RpcClientWithLB implements IRpcClient {
 		Random random = new Random();
 		int size = channelMap.size();
 		if (size < 1) {
-			throw new RuntimeException("No Server for " + serviceName + " Available Now");
+			return null;
 		}
 		int i = random.nextInt(size);
 		List<Channel> channels = new ArrayList<Channel>(channelMap.values());
@@ -269,5 +310,8 @@ public class RpcClientWithLB implements IRpcClient {
 	public void notifyEvent(NotifyEvent notifyEvent) {
 
 	}
+
+
+	// TODO add jvm shutdown hook
 
 }

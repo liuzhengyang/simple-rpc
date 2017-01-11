@@ -92,11 +92,22 @@ public class RpcServerWithLB {
 			}
 		}
 
-		try {
-			String s = curatorFramework.create().withMode(CreateMode.EPHEMERAL).forPath(serviceBasePath + "/" + ipPortStr);
-		} catch (Exception e) {
-			throw new RuntimeException("Register error");
+		boolean registerSuccess = false;
+
+		while(!registerSuccess) {
+			try {
+				String s = curatorFramework.create().withMode(CreateMode.EPHEMERAL).forPath(serviceBasePath + "/" + ipPortStr);
+				registerSuccess = true;
+			} catch (Exception e) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+				LOGGER.info("Retry Register ZK, {}", e.getMessage());
+			}
 		}
+
 		ServerBootstrap bootstrap = new ServerBootstrap();
 		bootstrap.group(bossGroup, workerGroup)
 				.channel(NioServerSocketChannel.class)
