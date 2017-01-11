@@ -40,7 +40,7 @@ public class ResponseCodec extends ByteToMessageCodec<Response>{
 		}
 		byte[] buffer = new byte[length];
 		in.readBytes(buffer);
-		Response response = serializer.deserialize(Response.class, buffer);
+		Response response = serializer.deserialize(buffer);
 		out.add(response);
 		LOGGER.info("Decode Result: {}", response);
 	}

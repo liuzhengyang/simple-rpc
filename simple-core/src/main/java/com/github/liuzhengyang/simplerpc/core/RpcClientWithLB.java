@@ -1,6 +1,5 @@
 package com.github.liuzhengyang.simplerpc.core;
 
-import com.github.liuzhengyang.simplerpc.common.Config;
 import com.google.common.base.Splitter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -11,15 +10,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.api.CuratorWatcher;
 import org.apache.curator.framework.api.GetChildrenBuilder;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +25,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -47,7 +44,7 @@ import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseM
  * @version 1.0
  * @since 2016-12-16
  */
-public class RpcClientWithLB implements IRpcClient{
+public class RpcClientWithLB implements IRpcClient {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RpcClientWithLB.class);
 
 	private static AtomicLong atomicLong = new AtomicLong();
@@ -57,6 +54,7 @@ public class RpcClientWithLB implements IRpcClient{
 	private String zkConn;
 	// 存放字符串Channel对应的map
 	private ConcurrentMap<String, Channel> channelMap = new ConcurrentHashMap<String, Channel>();
+
 	private static class ChannelWrapper {
 		private String connectStr;
 		private Channel channel;
@@ -98,9 +96,37 @@ public class RpcClientWithLB implements IRpcClient{
 
 		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
+
+
 		final GetChildrenBuilder children = curatorFramework.getChildren();
 		try {
 			final String serviceZKPath = "/simplerpc/services/" + serviceName;
+			PathChildrenCache pathChildrenCache = new PathChildrenCache(curatorFramework, serviceZKPath, true);
+			pathChildrenCache.start();
+			pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
+				public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
+					LOGGER.info("Listen Event {}", event);
+					List<String> newServiceData = children.forPath(serviceZKPath);
+					LOGGER.info("Server {} list change {}", serviceName, newServiceData);
+					// 关闭删除本地缓存中多出的channel
+					for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
+						String key = entry.getKey();
+						Channel value = entry.getValue();
+						if (!newServiceData.contains(key)) {
+							value.close();
+							LOGGER.info("Remove channel {}", key);
+							channelMap.remove(key, value);
+						}
+					}
+
+					for (String connStr : newServiceData) {
+						if (!channelMap.containsKey(connStr)) {
+							LOGGER.info("Add new Channel {}", connStr);
+							addNewChannel(connStr);
+						}
+					}
+				}
+			});
 			List<String> strings = children.forPath(serviceZKPath);
 			if (CollectionUtils.isEmpty(strings)) {
 				throw new RuntimeException("No Service available for " + serviceName);
@@ -115,35 +141,35 @@ public class RpcClientWithLB implements IRpcClient{
 				}
 			}
 
-			children.usingWatcher(new CuratorWatcher() {
-				public void process(WatchedEvent event) throws Exception {
-					Watcher.Event.EventType type = event.getType();
-					if (type == Watcher.Event.EventType.NodeChildrenChanged) {
-						String path = event.getPath();
-						if (serviceZKPath.equals(path)) {
-							List<String> newServiceData = children.forPath(serviceZKPath);
-							LOGGER.info("Server {} list change {}", serviceName, newServiceData);
-							if (CollectionUtils.isNotEmpty(newServiceData)) {
-								// 关闭删除本地缓存中多出的channel
-								for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
-									String key = entry.getKey();
-									Channel value = entry.getValue();
-									if (!newServiceData.contains(key)) {
-										value.close();
-										channelMap.remove(key, value);
-									}
-								}
-
-								for (String connStr : newServiceData) {
-									if (!channelMap.containsKey(connStr)) {
-										addNewChannel(connStr);
-									}
-								}
-							}
-						}
-					}
-				}
-			});
+//			children.usingWatcher(new CuratorWatcher() {
+//				public void process(WatchedEvent event) throws Exception {
+//					Watcher.Event.EventType type = event.getType();
+//					if (type == Watcher.Event.EventType.NodeChildrenChanged) {
+//						String path = event.getPath();
+//						if (serviceZKPath.equals(path)) {
+//							List<String> newServiceData = children.forPath(serviceZKPath);
+//							LOGGER.info("Server {} list change {}", serviceName, newServiceData);
+//							if (CollectionUtils.isNotEmpty(newServiceData)) {
+//								// 关闭删除本地缓存中多出的channel
+//								for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
+//									String key = entry.getKey();
+//									Channel value = entry.getValue();
+//									if (!newServiceData.contains(key)) {
+//										value.close();
+//										channelMap.remove(key, value);
+//									}
+//								}
+//
+//								for (String connStr : newServiceData) {
+//									if (!channelMap.containsKey(connStr)) {
+//										addNewChannel(connStr);
+//									}
+//								}
+//							}
+//						}
+//					}
+//				}
+//			});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -156,8 +182,8 @@ public class RpcClientWithLB implements IRpcClient{
 				.handler(new ChannelInitializer<Channel>() {
 					protected void initChannel(Channel ch) throws Exception {
 						ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO))
-								.addLast(new IdleStateHandler(30, 30, 30))
-								.addLast(new HeartBeatHandler())
+//								.addLast(new IdleStateHandler(30, 30, 30))
+//								.addLast(new HeartBeatHandler())
 								.addLast(new ResponseCodec())
 								.addLast(new RpcClientHandler())
 								.addLast(new RequestCodec())

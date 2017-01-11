@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 public class RpcServerWithLBTest {
 	@Test
 	public void init() throws Exception {
-		RpcServerWithLB rpcServer = new RpcServerWithLB(8080, new HelloImpl(), "hello");
+		RpcServerWithLB rpcServer = new RpcServerWithLB(8180, new HelloImpl(), "hello");
 		rpcServer.setZkConn("127.0.0.1:2181");
 		rpcServer.init();
 
@@ -22,7 +22,7 @@ public class RpcServerWithLBTest {
 	}
 	@Test
 	public void init2() throws Exception {
-		RpcServerWithLB rpcServer = new RpcServerWithLB(8081, new HelloImpl(), "hello");
+		RpcServerWithLB rpcServer = new RpcServerWithLB(8181, new HelloImpl(), "hello");
 		rpcServer.setZkConn("127.0.0.1:2181");
 		rpcServer.init();
 		Thread.sleep(1000 * 1000);

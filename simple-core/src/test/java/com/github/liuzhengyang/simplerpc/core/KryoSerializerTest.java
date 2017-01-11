@@ -29,7 +29,7 @@ public class KryoSerializerTest {
 
 		System.out.println(serialize.length);
 
-		Person deserialize = serializer.deserialize(Person.class, serialize);
+		Person deserialize = serializer.deserialize(serialize);
 		System.out.println(deserialize);
 	}
 

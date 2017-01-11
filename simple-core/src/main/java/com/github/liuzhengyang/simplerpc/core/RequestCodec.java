@@ -34,7 +34,7 @@ public class RequestCodec extends ByteToMessageCodec<Request>{
 		}
 		byte[] buffer = new byte[length];
 		in.readBytes(buffer);
-		Request request = serializer.deserialize(Request.class, buffer);
+		Request request = serializer.deserialize(buffer);
 		out.add(request);
 	}
 }

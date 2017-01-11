@@ -28,7 +28,7 @@ public class SerializerTest {
 		p.setClazz(String.class);
 		byte[] serialize = serializer.serialize(p);
 		System.out.println(serialize);
-		Person deserialize = serializer.deserialize(Person.class, serialize);
+		Person deserialize = serializer.deserialize(serialize);
 		System.out.println(deserialize);
 	}
 
