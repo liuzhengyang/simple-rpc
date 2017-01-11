@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseMap;
 
 /**
- * Description:
+ * Description: 客户端代码
  *
  * @author liuzhengyang
  * @version 1.0
@@ -98,6 +98,7 @@ public class RpcClientWithLB implements IRpcClient {
 	public void init() {
 
 
+		// TODO 这段代码需要仔细检查重构整理
 		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
 
