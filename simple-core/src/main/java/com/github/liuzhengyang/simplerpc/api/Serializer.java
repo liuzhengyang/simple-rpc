@@ -9,5 +9,5 @@ package com.github.liuzhengyang.simplerpc.api;
  */
 public interface Serializer {
 	public byte[] serialize(Object obj);
-	public <T> T deserialize(Class<T> clazz, byte[] bytes);
+	public <T> T deserialize(byte[] bytes);
 }

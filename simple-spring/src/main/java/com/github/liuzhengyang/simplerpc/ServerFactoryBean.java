@@ -19,14 +19,16 @@ public class ServerFactoryBean implements FactoryBean<Object> {
 	private String ip;
 	private int port;
 	private String serviceName;
+	private String zkConn;
 	private RpcServerWithLB rpcServer;
 
 	public Object getObject() throws Exception {
-		rpcServer = new RpcServerWithLB(port, serviceImpl, serviceName);
 		return this;
 	}
 
 	public void start() {
+		rpcServer = new RpcServerWithLB(port, serviceImpl, serviceName);
+		rpcServer.setZkConn(getZkConn());
 		rpcServer.init();
 	}
 
@@ -35,7 +37,7 @@ public class ServerFactoryBean implements FactoryBean<Object> {
 	}
 
 	public Class<?> getObjectType() {
-		return RpcServer.class;
+		return this.getClass();
 	}
 
 	public boolean isSingleton() {
@@ -90,5 +92,13 @@ public class ServerFactoryBean implements FactoryBean<Object> {
 
 	public void setRpcServer(RpcServerWithLB rpcServer) {
 		this.rpcServer = rpcServer;
+	}
+
+	public String getZkConn() {
+		return zkConn;
+	}
+
+	public void setZkConn(String zkConn) {
+		this.zkConn = zkConn;
 	}
 }

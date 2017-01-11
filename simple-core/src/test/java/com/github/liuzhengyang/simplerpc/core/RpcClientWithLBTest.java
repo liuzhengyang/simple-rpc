@@ -15,6 +15,7 @@ public class RpcClientWithLBTest {
 	@Test
 	public void init() throws Exception {
 		RpcClientWithLB rpcClientWithLB = new RpcClientWithLB("hello");
+		rpcClientWithLB.setZkConn("127.0.0.1:2181");
 		rpcClientWithLB.init();
 		IHello iHello = rpcClientWithLB.newProxy(IHello.class);
 		iHello.say("hello world");

@@ -11,6 +11,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -105,6 +106,7 @@ public class RpcClientWithLB implements IRpcClient{
 				throw new RuntimeException("No Service available for " + serviceName);
 			}
 
+			LOGGER.info("Found Server {} List {}", serviceName, strings);
 			for (String connStr : strings) {
 				try {
 					addNewChannel(connStr);
@@ -120,6 +122,7 @@ public class RpcClientWithLB implements IRpcClient{
 						String path = event.getPath();
 						if (serviceZKPath.equals(path)) {
 							List<String> newServiceData = children.forPath(serviceZKPath);
+							LOGGER.info("Server {} list change {}", serviceName, newServiceData);
 							if (CollectionUtils.isNotEmpty(newServiceData)) {
 								// 关闭删除本地缓存中多出的channel
 								for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
@@ -153,6 +156,8 @@ public class RpcClientWithLB implements IRpcClient{
 				.handler(new ChannelInitializer<Channel>() {
 					protected void initChannel(Channel ch) throws Exception {
 						ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO))
+								.addLast(new IdleStateHandler(30, 30, 30))
+								.addLast(new HeartBeatHandler())
 								.addLast(new ResponseCodec())
 								.addLast(new RpcClientHandler())
 								.addLast(new RequestCodec())

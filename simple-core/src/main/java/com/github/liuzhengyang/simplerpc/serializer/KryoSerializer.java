@@ -21,16 +21,16 @@ public class KryoSerializer implements Serializer {
 		Kryo kryo = new Kryo();
 		ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream(1024);
 		Output output = new Output(byteOutputStream);
-		kryo.writeObject(output, obj);
+		kryo.writeClassAndObject(output, obj);
 		output.close();
 		return byteOutputStream.toByteArray();
 	}
 
-	public <T> T deserialize(Class<T> clazz, byte[] bytes) {
+	public <T> T deserialize(byte[] bytes) {
 		Kryo kryo = new Kryo();
 		ByteArrayInputStream byteInputStream = new ByteArrayInputStream(bytes);
 		Input input = new Input(byteInputStream);
 		input.close();
-		return kryo.readObject(input, clazz);
+		return (T) kryo.readClassAndObject(input);
 	}
 }
