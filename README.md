@@ -1,6 +1,7 @@
 # simple-rpc
 
 RPC BASED ON NETTY
+Running in some business online. 
 
 # 内部结构
 * IO netty
