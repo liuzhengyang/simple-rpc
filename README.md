@@ -30,6 +30,7 @@ Running in some business online.
 当前采用简单的在消息体前加上4byte的消息长度值
 
 ## 使用示例
+// 需要先启动一个zookeeper作为服务注册发现中心
 ```
 // 服务接口
 public interface IHello {
@@ -60,7 +61,7 @@ public class HelloImpl implements IHello {
 @Bean
 	public CountService countService() {
 		RpcClientWithLB rpcClientWithLB = new RpcClientWithLB("fyes-counter");
-		rpcClientWithLB.setZkConn("10.4.105.252:2181");
+		rpcClientWithLB.setZkConn("127.0.0.1:2181");
 		rpcClientWithLB.init();
 		CountService countService = rpcClientWithLB.newProxy(CountService.class);
 		return countService;
