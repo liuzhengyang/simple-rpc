@@ -5,8 +5,8 @@ Running in some business online.
 
 # 内部结构
 * IO netty
-* Serialize protostuff, kryo
-* Use Zookeeper For Service Discovery
+* Serialize with protostuff, kryo
+* Transparent service discovery and connection management
 
 ![rpc-architecture](http://oek9m2h2f.bkt.clouddn.com/rpc.png)
 

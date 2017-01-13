@@ -168,7 +168,14 @@ public class RpcClientWithLB implements IRpcClient {
 					}
 				});
 		try {
-			ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000).connect(serverIp, port).sync();
+			final ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000).connect(serverIp, port).sync();
+			f.addListener(new ChannelFutureListener() {
+				public void operationComplete(ChannelFuture future) throws Exception {
+					if (future.isSuccess()) {
+						LOGGER.info("Connect success {} ", f);
+					}
+				}
+			});
 			Channel channel = f.channel();
 			String connStr = serverIp + ":" + port;
 			channelMap.put(connStr, channel);
