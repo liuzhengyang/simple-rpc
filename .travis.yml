@@ -87,6 +87,7 @@ matrix:
 
 #install: tool/travis-install.sh
 #script: tool/travis-script.sh
+script: mvn clean test
 
 
 services:
