@@ -1,5 +1,7 @@
 # simple-rpc
 
+[![Build Status](https://travis-ci.org/liuzhengyang/simple-rpc.svg?branch=master)](https://travis-ci.org/liuzhengyang/simple-rpc)
+
 RPC BASED ON NETTY
 Running in some business online. 
 
