@@ -1,5 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core;
 
+import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
+import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
 import com.google.common.base.Splitter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -27,7 +29,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -161,9 +162,9 @@ public class RpcClientWithLB implements IRpcClient {
 						ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO))
 //								.addLast(new IdleStateHandler(30, 30, 30))
 //								.addLast(new HeartBeatHandler())
-								.addLast(new ResponseCodec())
+								.addLast(new ProtocolDecoder(10 * 1024 * 1024))
+								.addLast(new ProtocolEncoder())
 								.addLast(new RpcClientHandler())
-								.addLast(new RequestCodec())
 						;
 					}
 				});
@@ -182,7 +183,7 @@ public class RpcClientWithLB implements IRpcClient {
 			channel.closeFuture().addListener(new ChannelFutureListener() {
 				public void operationComplete(ChannelFuture future) throws Exception {
 					Thread.sleep(1000);
-					LOGGER.info("Reconnect {} {}", serverIp, port);
+					LOGGER.info("Try to reconnect {} {}", serverIp, port);
 					addNewChannel(serverIp + ":" + port);
 				}
 			});
@@ -266,6 +267,7 @@ public class RpcClientWithLB implements IRpcClient {
 	}
 
 	public <T> T newProxy(final Class<T> serviceInterface) {
+		// Fix JDK proxy  limitations and add other proxy implementation like cg-lib, spring proxy factory etc.
 		Object o = Proxy.newProxyInstance(RpcClientWithLB.class.getClassLoader(), new Class[]{serviceInterface}, new InvocationHandler() {
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				return sendMessage(serviceInterface, method, args).getResponse();

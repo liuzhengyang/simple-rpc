@@ -33,13 +33,13 @@ public class RequestCodec extends ByteToMessageCodec<Request>{
 		byte[] bytes = serializer.serialize(msg);
 		int length = bytes.length;
 		out.writeInt(length);
-		ByteBuf byteBuf = out.writeBytes(bytes);
+		out.writeBytes(bytes);
 	}
 
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		int length = in.readInt();
 		if (length > maxFrameLength) {
-			throw new TooLongFrameException();
+			throw new TooLongFrameException("length " + length);
 		}
 		byte[] buffer = new byte[length];
 		in.readBytes(buffer);

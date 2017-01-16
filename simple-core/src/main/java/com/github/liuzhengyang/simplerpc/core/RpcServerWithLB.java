@@ -1,6 +1,8 @@
 package com.github.liuzhengyang.simplerpc.core;
 
 import com.github.liuzhengyang.simplerpc.common.Config;
+import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
+import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
 import com.github.liuzhengyang.simplerpc.core.lb.RegisterUtil;
 import com.github.liuzhengyang.simplerpc.core.util.InetUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -82,9 +84,9 @@ public class RpcServerWithLB {
 					protected void initChannel(SocketChannel ch) throws Exception {
 						ch.pipeline()
 								.addLast(new LoggingHandler(LogLevel.INFO))
-								.addLast(new RequestCodec())
+								.addLast(new ProtocolDecoder(10 * 1024 * 1024))
+								.addLast(new ProtocolEncoder())
 								.addLast(new RpcServerHandler(serviceImpl))
-								.addLast(new ResponseCodec())
 						;
 					}
 				});
