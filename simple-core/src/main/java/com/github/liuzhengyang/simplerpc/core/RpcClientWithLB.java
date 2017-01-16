@@ -57,6 +57,7 @@ public class RpcClientWithLB implements IRpcClient {
 	private String serviceName;
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 	private String zkConn;
+	private int requestTimeoutMillis = 10 * 1000;
 	// 存放字符串Channel对应的map
 	private ConcurrentMap<String, Channel> channelMap = new ConcurrentHashMap<String, Channel>();
 
@@ -246,7 +247,7 @@ public class RpcClientWithLB implements IRpcClient {
 		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 		responseMap.put(request.getRequestId(), blockingQueue);
 		try {
-			return blockingQueue.poll(10, TimeUnit.SECONDS);
+			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return null;
@@ -291,6 +292,14 @@ public class RpcClientWithLB implements IRpcClient {
 
 	public void notifyEvent(NotifyEvent notifyEvent) {
 
+	}
+
+	public int getRequestTimeoutMillis() {
+		return requestTimeoutMillis;
+	}
+
+	public void setRequestTimeoutMillis(int requestTimeoutMillis) {
+		this.requestTimeoutMillis = requestTimeoutMillis;
 	}
 
 	// 启动一个后台任务, 定期检查服务器

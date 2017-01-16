@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
  * @version 1.0
  * @since 2016-12-15
  */
+@Deprecated
+// Use @link com.github.liuzhengyang.simplerpc.core.RpcServerWithLB
 public class RpcServer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RpcServer.class);
 

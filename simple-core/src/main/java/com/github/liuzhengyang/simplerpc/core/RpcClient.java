@@ -15,8 +15,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -29,10 +27,13 @@ import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseM
  * @version 1.0
  * @since 2016-12-16
  */
+@Deprecated
+// Use @link com.github.liuzhengyang.simplerpc.core.RpcClientWithLB
 public class RpcClient implements IRpcClient{
 	private static AtomicLong atomicLong = new AtomicLong();
 	private String serverIp;
 	private int port;
+	private int requestTimeoutMillis = 10 * 1000;
 	private Channel channel;
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 
@@ -73,7 +74,7 @@ public class RpcClient implements IRpcClient{
 		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 		responseMap.put(request.getRequestId(), blockingQueue);
 		try {
-			return blockingQueue.poll(10, TimeUnit.SECONDS);
+			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return null;
@@ -105,4 +106,11 @@ public class RpcClient implements IRpcClient{
 
 	}
 
+	public int getRequestTimeoutMillis() {
+		return requestTimeoutMillis;
+	}
+
+	public void setRequestTimeoutMillis(int requestTimeoutMillis) {
+		this.requestTimeoutMillis = requestTimeoutMillis;
+	}
 }
