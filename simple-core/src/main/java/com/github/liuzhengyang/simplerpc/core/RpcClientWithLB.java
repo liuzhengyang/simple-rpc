@@ -40,7 +40,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseMap;
+import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
 
 /**
  * Description: 客户端代码
@@ -49,7 +49,7 @@ import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseM
  * @version 1.0
  * @since 2016-12-16
  */
-public class RpcClientWithLB implements IRpcClient {
+public class RpcClientWithLB {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RpcClientWithLB.class);
 
 	private static AtomicLong atomicLong = new AtomicLong();
@@ -197,7 +197,7 @@ public class RpcClientWithLB implements IRpcClient {
 
 	private Channel reconnect(Channel channel) {
 		Channel result = null;
-		while(result == null) {
+		while (result == null) {
 			InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
 			String hostAddress = socketAddress.getAddress().getHostAddress();
 			int port = socketAddress.getPort();
@@ -288,10 +288,6 @@ public class RpcClientWithLB implements IRpcClient {
 		} finally {
 			eventLoopGroup.shutdownGracefully();
 		}
-	}
-
-	public void notifyEvent(NotifyEvent notifyEvent) {
-
 	}
 
 	public int getRequestTimeoutMillis() {

@@ -11,6 +11,6 @@ import java.util.concurrent.ConcurrentMap;
  * @version 1.0
  * @since 2017-01-10
  */
-public class ResponseContainer {
+public class ResponseHolder {
 	static ConcurrentMap<Long, BlockingQueue<Response>> responseMap = new ConcurrentHashMap<Long, BlockingQueue<Response>>();
 }

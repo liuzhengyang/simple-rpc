@@ -12,6 +12,8 @@ import java.net.UnknownHostException;
  */
 public class InetUtil {
 	private InetUtil(){}
+
+	// TODO review this method
 	public static String getLocalIp() {
 		try {
 			return InetAddress.getLocalHost().getHostAddress();
