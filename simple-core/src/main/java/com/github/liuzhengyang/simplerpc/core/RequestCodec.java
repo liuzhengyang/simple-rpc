@@ -19,6 +19,15 @@ import java.util.List;
  * @since 2016-12-16
  */
 public class RequestCodec extends ByteToMessageCodec<Request>{
+	private int maxFrameLength = 10 * 1024 * 1024; // 10MB
+
+	public RequestCodec() {
+
+	}
+
+	public RequestCodec(int maxFrameLength) {
+		this.maxFrameLength = maxFrameLength;
+	}
 	private Serializer serializer = new KryoSerializer();
 	protected void encode(ChannelHandlerContext ctx, Request msg, ByteBuf out) throws Exception {
 		byte[] bytes = serializer.serialize(msg);
@@ -29,7 +38,7 @@ public class RequestCodec extends ByteToMessageCodec<Request>{
 
 	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		int length = in.readInt();
-		if (length > Constants.MAX_FRAME_LENGTH) {
+		if (length > maxFrameLength) {
 			throw new TooLongFrameException();
 		}
 		byte[] buffer = new byte[length];

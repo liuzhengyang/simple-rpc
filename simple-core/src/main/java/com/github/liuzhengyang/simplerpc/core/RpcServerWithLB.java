@@ -75,6 +75,32 @@ public class RpcServerWithLB {
 	}
 
 	public void init() {
+		ServerBootstrap bootstrap = new ServerBootstrap();
+		bootstrap.group(bossGroup, workerGroup)
+				.channel(NioServerSocketChannel.class)
+				.childHandler(new ChannelInitializer<SocketChannel>() {
+					protected void initChannel(SocketChannel ch) throws Exception {
+						ch.pipeline()
+								.addLast(new LoggingHandler(LogLevel.INFO))
+								.addLast(new RequestCodec())
+								.addLast(new RpcServerHandler(serviceImpl))
+								.addLast(new ResponseCodec())
+						;
+					}
+				});
+		try {
+			ChannelFuture sync = bootstrap.bind(port).sync();
+			registerService();
+			LOGGER.info("Server Started At {}", port);
+			started = true;
+			this.channel = sync.channel();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// Register service provider
+	private void registerService() {
 		String zkConn = getZkConn();
 		String localIp = InetUtil.getLocalIp();
 		String ipPortStr = localIp + ":" + port;
@@ -105,29 +131,12 @@ public class RpcServerWithLB {
 					e1.printStackTrace();
 				}
 				LOGGER.info("Retry Register ZK, {}", e.getMessage());
+				try {
+					curatorFramework.delete().forPath(serviceBasePath + "/" + ipPortStr);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
 			}
-		}
-
-		ServerBootstrap bootstrap = new ServerBootstrap();
-		bootstrap.group(bossGroup, workerGroup)
-				.channel(NioServerSocketChannel.class)
-				.childHandler(new ChannelInitializer<SocketChannel>() {
-					protected void initChannel(SocketChannel ch) throws Exception {
-						ch.pipeline()
-								.addLast(new LoggingHandler(LogLevel.INFO))
-								.addLast(new RequestCodec())
-								.addLast(new RpcServerHandler(serviceImpl))
-								.addLast(new ResponseCodec())
-						;
-					}
-				});
-		try {
-			ChannelFuture sync = bootstrap.bind(port).sync();
-			LOGGER.info("Server Started At {}", port);
-			started = true;
-			this.channel = sync.channel();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
 	}
 
