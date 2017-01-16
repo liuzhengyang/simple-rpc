@@ -1,20 +1,13 @@
 package com.github.liuzhengyang.simplerpc.core;
 
-import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
-import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
+import com.github.liuzhengyang.simplerpc.core.pool.ConnectionObjectFactory;
 import com.google.common.base.Splitter;
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.GetChildrenBuilder;
@@ -28,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,19 +50,20 @@ public class RpcClientWithLB implements IRpcClient {
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 	private String zkConn;
 	private int requestTimeoutMillis = 10 * 1000;
+
 	// 存放字符串Channel对应的map
-	private ConcurrentMap<String, Channel> channelMap = new ConcurrentHashMap<String, Channel>();
+	public static ConcurrentMap<String, ChannelWrapper> channelMap = new ConcurrentHashMap<String, ChannelWrapper>();
 
 	private static class ChannelWrapper {
-		private String connectStr;
+		private String host;
+		private int ip;
 		private Channel channel;
+		private ObjectPool<Channel> channelObjectPool;
 
-		public String getConnectStr() {
-			return connectStr;
-		}
-
-		public void setConnectStr(String connectStr) {
-			this.connectStr = connectStr;
+		public ChannelWrapper(String host, int port) {
+			this.host = host;
+			this.ip = port;
+			channelObjectPool = new GenericObjectPool<Channel>(new ConnectionObjectFactory(host, port));
 		}
 
 		public Channel getChannel() {
@@ -81,7 +74,33 @@ public class RpcClientWithLB implements IRpcClient {
 			this.channel = channel;
 		}
 
+		public void close() {
+			channelObjectPool.close();
+		}
 
+		public String getHost() {
+			return host;
+		}
+
+		public void setHost(String host) {
+			this.host = host;
+		}
+
+		public int getIp() {
+			return ip;
+		}
+
+		public void setIp(int ip) {
+			this.ip = ip;
+		}
+
+		public ObjectPool<Channel> getChannelObjectPool() {
+			return channelObjectPool;
+		}
+
+		public void setChannelObjectPool(ObjectPool<Channel> channelObjectPool) {
+			this.channelObjectPool = channelObjectPool;
+		}
 	}
 
 	public RpcClientWithLB(String serviceName) {
@@ -117,9 +136,9 @@ public class RpcClientWithLB implements IRpcClient {
 					List<String> newServiceData = children.forPath(serviceZKPath);
 					LOGGER.info("Server {} list change {}", serviceName, newServiceData);
 					// 关闭删除本地缓存中多出的channel
-					for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
+					for (Map.Entry<String, ChannelWrapper> entry : channelMap.entrySet()) {
 						String key = entry.getKey();
-						Channel value = entry.getValue();
+						ChannelWrapper value = entry.getValue();
 						if (!newServiceData.contains(key)) {
 							value.close();
 							LOGGER.info("Remove channel {}", key);
@@ -154,64 +173,23 @@ public class RpcClientWithLB implements IRpcClient {
 		}
 	}
 
-	private Channel getNewChannel(final String serverIp, final int port) {
-		Bootstrap bootstrap = new Bootstrap();
-		bootstrap.channel(NioSocketChannel.class)
-				.group(eventLoopGroup)
-				.handler(new ChannelInitializer<Channel>() {
-					protected void initChannel(Channel ch) throws Exception {
-						ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO))
-//								.addLast(new IdleStateHandler(30, 30, 30))
-//								.addLast(new HeartBeatHandler())
-								.addLast(new ProtocolDecoder(10 * 1024 * 1024))
-								.addLast(new ProtocolEncoder())
-								.addLast(new RpcClientHandler())
-						;
-					}
-				});
-		try {
-			final ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000).connect(serverIp, port).sync();
-			f.addListener(new ChannelFutureListener() {
-				public void operationComplete(ChannelFuture future) throws Exception {
-					if (future.isSuccess()) {
-						LOGGER.info("Connect success {} ", f);
-					}
-				}
-			});
-			Channel channel = f.channel();
-			String connStr = serverIp + ":" + port;
-			channelMap.put(connStr, channel);
-			channel.closeFuture().addListener(new ChannelFutureListener() {
-				public void operationComplete(ChannelFuture future) throws Exception {
-					Thread.sleep(1000);
-					LOGGER.info("Try to reconnect {} {}", serverIp, port);
-					addNewChannel(serverIp + ":" + port);
-				}
-			});
-			return channel;
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+//	private Channel reconnect(Channel channel) {
+//		Channel result = null;
+//		while(result == null) {
+//			InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
+//			String hostAddress = socketAddress.getAddress().getHostAddress();
+//			int port = socketAddress.getPort();
+//			result = addNewChannel(hostAddress + ":" + port);
+//			try {
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//		return result;
+//	}
 
-	private Channel reconnect(Channel channel) {
-		Channel result = null;
-		while(result == null) {
-			InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
-			String hostAddress = socketAddress.getAddress().getHostAddress();
-			int port = socketAddress.getPort();
-			result = addNewChannel(hostAddress + ":" + port);
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		return result;
-	}
-
-	private Channel addNewChannel(String connStr) {
+	private void addNewChannel(String connStr) {
 		try {
 			List<String> strings = Splitter.on(":").splitToList(connStr);
 			if (strings.size() != 2) {
@@ -219,10 +197,10 @@ public class RpcClientWithLB implements IRpcClient {
 			}
 			String host = strings.get(0);
 			int port = Integer.parseInt(strings.get(1));
-			return getNewChannel(host, port);
+			ChannelWrapper channelWrapper = new ChannelWrapper(host, port);
+			channelMap.putIfAbsent(connStr, channelWrapper);
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
 	}
 
@@ -233,16 +211,30 @@ public class RpcClientWithLB implements IRpcClient {
 		request.setParams(args);
 		request.setClazz(clazz);
 		request.setParameterTypes(method.getParameterTypes());
-		Channel channel = selectChannel();
+		ChannelWrapper channelWrapper = selectChannel();
+		if (channelWrapper == null) {
+			Response response = new Response();
+			RuntimeException runtimeException = new RuntimeException("Channel is not active now");
+			response.setThrowable(runtimeException);
+			return response;
+		}
+
+		Channel channel = null;
+		try {
+			channel = channelWrapper.getChannelObjectPool().borrowObject();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		if (channel == null) {
 			Response response = new Response();
 			RuntimeException runtimeException = new RuntimeException("Channel is not active now");
 			response.setThrowable(runtimeException);
 			return response;
 		}
-		if (!channel.isActive()) {
-			channel = reconnect(channel);
-		}
+
+//		if (!channel.isActive()) {
+//			channel = reconnect(channel);
+//		}
 		channel.writeAndFlush(request);
 		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 		responseMap.put(request.getRequestId(), blockingQueue);
@@ -252,18 +244,24 @@ public class RpcClientWithLB implements IRpcClient {
 			e.printStackTrace();
 			return null;
 		} finally {
+			try {
+				channelWrapper.getChannelObjectPool().returnObject(channel);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			responseMap.remove(request.getRequestId());
+
 		}
 	}
 
-	private Channel selectChannel() {
+	private ChannelWrapper selectChannel() {
 		Random random = new Random();
 		int size = channelMap.size();
 		if (size < 1) {
 			return null;
 		}
 		int i = random.nextInt(size);
-		List<Channel> channels = new ArrayList<Channel>(channelMap.values());
+		List<ChannelWrapper> channels = new ArrayList<ChannelWrapper>(channelMap.values());
 		return channels.get(i);
 	}
 
@@ -279,12 +277,10 @@ public class RpcClientWithLB implements IRpcClient {
 
 	public void destroy() {
 		try {
-			for (Map.Entry<String, Channel> entry : channelMap.entrySet()) {
-				Channel value = entry.getValue();
-				value.close().sync();
+			for (Map.Entry<String, ChannelWrapper> entry : channelMap.entrySet()) {
+				ChannelWrapper value = entry.getValue();
+				value.close();
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		} finally {
 			eventLoopGroup.shutdownGracefully();
 		}
