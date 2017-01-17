@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 
-import static com.github.liuzhengyang.simplerpc.core.ResponseContainer.responseMap;
+import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
 
 /**
  * Description:

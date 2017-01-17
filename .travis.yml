@@ -8,4 +8,4 @@ branches:
     - 3
     - 3.5
 before_install: 'mvn -version'
-install: 'mvn clean install -Pfull -DskipTests'
+install: 'mvn clean install -DskipTests --also-make-dependents'

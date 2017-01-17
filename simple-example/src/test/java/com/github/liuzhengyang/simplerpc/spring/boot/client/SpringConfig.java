@@ -27,8 +27,8 @@ public class SpringConfig {
 	@Bean
 	public IHello rpcClient() {
 		ClientFactoryBean<IHello> clientFactoryBean = new ClientFactoryBean<IHello>();
-		clientFactoryBean.setIp("127.0.0.1");
-		clientFactoryBean.setPort(9090);
+		clientFactoryBean.setZkConn("127.0.0.1:2181");
+		clientFactoryBean.setServiceName("test");
 		clientFactoryBean.setServiceInterface(IHello.class);
 		return clientFactoryBean.getObject();
 	}
