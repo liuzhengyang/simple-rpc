@@ -10,5 +10,5 @@ branches:
 before_install:
   - 'mvn -version'
   - sudo apt-get -qq update
-  - sudo apt-get install zookeeper
+  - sudo apt-get install zookeeperd
 install: 'mvn clean install -Dmaven.test.skip=true --also-make-dependents'
