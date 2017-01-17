@@ -39,6 +39,7 @@ public class RpcServerWithLB {
 	private Object serviceImpl;
 	private String serviceName;
 	private String zkConn;
+	private String serviceRegisterPath;
 
 	private EventLoopGroup bossGroup = new NioEventLoopGroup();
 	private EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -102,8 +103,8 @@ public class RpcServerWithLB {
 	// Register service provider
 	private void registerService() {
 		String zkConn = getZkConn();
-		String localIp = InetUtil.getLocalIp();
-		String ipPortStr = localIp + ":" + port;
+		ip = InetUtil.getLocalIp();
+		String ipPortStr = ip + ":" + port;
 		curatorFramework = CuratorFrameworkFactory.newClient(zkConn, new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
 		String serviceBasePath = ZK_BASE_PATH + "/services/" + serviceName;
@@ -139,9 +140,18 @@ public class RpcServerWithLB {
 			}
 		}
 	}
+	private void unRegister() {
+		try {
+			curatorFramework.delete().forPath(ZK_BASE_PATH + "/services/" + serviceName + "/" + ip + ":" + port);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void stop() {
+		unRegister();
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
+
 	}
 }

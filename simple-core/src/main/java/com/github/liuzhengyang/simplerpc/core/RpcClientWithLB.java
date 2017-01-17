@@ -29,6 +29,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,9 +54,10 @@ public class RpcClientWithLB {
 	private int requestTimeoutMillis = 10 * 1000;
 
 	// 存放字符串Channel对应的map
-	public static ConcurrentMap<String, ChannelWrapper> channelMap = new ConcurrentHashMap<String, ChannelWrapper>();
+	public static CopyOnWriteArrayList<ChannelWrapper> channelWrappers = new CopyOnWriteArrayList<ChannelWrapper>();
 
 	private static class ChannelWrapper {
+		private String connStr;
 		private String host;
 		private int ip;
 		private Channel channel;
@@ -63,7 +66,16 @@ public class RpcClientWithLB {
 		public ChannelWrapper(String host, int port) {
 			this.host = host;
 			this.ip = port;
+			this.connStr = host + ":" + ip;
 			channelObjectPool = new GenericObjectPool<Channel>(new ConnectionObjectFactory(host, port));
+		}
+
+		public String getConnStr() {
+			return connStr;
+		}
+
+		public void setConnStr(String connStr) {
+			this.connStr = connStr;
 		}
 
 		public Channel getChannel() {
@@ -101,6 +113,18 @@ public class RpcClientWithLB {
 		public void setChannelObjectPool(ObjectPool<Channel> channelObjectPool) {
 			this.channelObjectPool = channelObjectPool;
 		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder("ChannelWrapper{");
+			sb.append("connStr='").append(connStr).append('\'');
+			sb.append(", host='").append(host).append('\'');
+			sb.append(", ip=").append(ip);
+			sb.append(", channel=").append(channel);
+			sb.append(", channelObjectPool=").append(channelObjectPool);
+			sb.append('}');
+			return sb.toString();
+		}
 	}
 
 	public RpcClientWithLB(String serviceName) {
@@ -118,7 +142,6 @@ public class RpcClientWithLB {
 
 	public void init() {
 
-
 		// TODO 这段代码需要仔细检查重构整理
 		// 注册中心不可用时,保存本地缓存
 		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
@@ -135,25 +158,32 @@ public class RpcClientWithLB {
 					LOGGER.info("Listen Event {}", event);
 					List<String> newServiceData = children.forPath(serviceZKPath);
 					LOGGER.info("Server {} list change {}", serviceName, newServiceData);
+
 					// 关闭删除本地缓存中多出的channel
-					for (Map.Entry<String, ChannelWrapper> entry : channelMap.entrySet()) {
-						String key = entry.getKey();
-						ChannelWrapper value = entry.getValue();
-						if (!newServiceData.contains(key)) {
-							value.close();
-							LOGGER.info("Remove channel {}", key);
-							channelMap.remove(key, value);
+					for (ChannelWrapper cw : channelWrappers) {
+						String connStr = cw.getConnStr();
+						if (!newServiceData.contains(connStr)) {
+							cw.close();
+							LOGGER.info("Remove channel {}", connStr);
+							channelWrappers.remove(cw);
 						}
 					}
 
+					// 增加本地缓存中不存在的连接
 					for (String connStr : newServiceData) {
-						if (!channelMap.containsKey(connStr)) {
-							LOGGER.info("Add new Channel {}", connStr);
+						boolean containThis = false;
+						for (ChannelWrapper cw : channelWrappers) {
+							if (connStr != null && connStr.equals(cw.getConnStr())) {
+								containThis = true;
+							}
+						}
+						if (!containThis) {
 							addNewChannel(connStr);
 						}
 					}
 				}
 			});
+
 			List<String> strings = children.forPath(serviceZKPath);
 			if (CollectionUtils.isEmpty(strings)) {
 				throw new RuntimeException("No Service available for " + serviceName);
@@ -173,22 +203,6 @@ public class RpcClientWithLB {
 		}
 	}
 
-//	private Channel reconnect(Channel channel) {
-//		Channel result = null;
-//		while(result == null) {
-//			InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
-//			String hostAddress = socketAddress.getAddress().getHostAddress();
-//			int port = socketAddress.getPort();
-//			result = addNewChannel(hostAddress + ":" + port);
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//		}
-//		return result;
-//	}
-
 	private void addNewChannel(String connStr) {
 		try {
 			List<String> strings = Splitter.on(":").splitToList(connStr);
@@ -198,7 +212,8 @@ public class RpcClientWithLB {
 			String host = strings.get(0);
 			int port = Integer.parseInt(strings.get(1));
 			ChannelWrapper channelWrapper = new ChannelWrapper(host, port);
-			channelMap.putIfAbsent(connStr, channelWrapper);
+			channelWrappers.add(channelWrapper);
+			LOGGER.info("Add New Channel {}, {}", connStr, channelWrapper);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -227,22 +242,19 @@ public class RpcClientWithLB {
 		}
 		if (channel == null) {
 			Response response = new Response();
-			RuntimeException runtimeException = new RuntimeException("Channel is not active now");
+			RuntimeException runtimeException = new RuntimeException("Channel is not available now");
 			response.setThrowable(runtimeException);
 			return response;
 		}
 
-//		if (!channel.isActive()) {
-//			channel = reconnect(channel);
-//		}
-		channel.writeAndFlush(request);
-		BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
-		responseMap.put(request.getRequestId(), blockingQueue);
+
 		try {
+			channel.writeAndFlush(request);
+			BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
+			responseMap.put(request.getRequestId(), blockingQueue);
 			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			return null;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		} finally {
 			try {
 				channelWrapper.getChannelObjectPool().returnObject(channel);
@@ -256,20 +268,23 @@ public class RpcClientWithLB {
 
 	private ChannelWrapper selectChannel() {
 		Random random = new Random();
-		int size = channelMap.size();
+		int size = channelWrappers.size();
 		if (size < 1) {
 			return null;
 		}
 		int i = random.nextInt(size);
-		List<ChannelWrapper> channels = new ArrayList<ChannelWrapper>(channelMap.values());
-		return channels.get(i);
+		return channelWrappers.get(i);
 	}
 
 	public <T> T newProxy(final Class<T> serviceInterface) {
 		// Fix JDK proxy  limitations and add other proxy implementation like cg-lib, spring proxy factory etc.
 		Object o = Proxy.newProxyInstance(RpcClientWithLB.class.getClassLoader(), new Class[]{serviceInterface}, new InvocationHandler() {
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				return sendMessage(serviceInterface, method, args).getResponse();
+				try {
+					return sendMessage(serviceInterface, method, args).getResponse();
+				} catch (Exception e) {
+					return null;
+				}
 			}
 		});
 		return (T) o;
@@ -277,9 +292,8 @@ public class RpcClientWithLB {
 
 	public void destroy() {
 		try {
-			for (Map.Entry<String, ChannelWrapper> entry : channelMap.entrySet()) {
-				ChannelWrapper value = entry.getValue();
-				value.close();
+			for (ChannelWrapper cw : channelWrappers) {
+				cw.close();
 			}
 		} finally {
 			eventLoopGroup.shutdownGracefully();

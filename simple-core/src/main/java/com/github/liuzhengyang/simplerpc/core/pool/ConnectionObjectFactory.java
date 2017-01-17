@@ -15,12 +15,9 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.github.liuzhengyang.simplerpc.core.RpcClientWithLB.channelMap;
 
 /**
  * Description:
@@ -41,15 +38,13 @@ public class ConnectionObjectFactory extends BasePooledObjectFactory<Channel> {
 		this.port = port;
 	}
 
-	public Channel create() throws Exception {
+	private Channel connectNewChannel() {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.channel(NioSocketChannel.class)
 				.group(new NioEventLoopGroup(1))
 				.handler(new ChannelInitializer<Channel>() {
 					protected void initChannel(Channel ch) throws Exception {
 						ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO))
-//								.addLast(new IdleStateHandler(30, 30, 30))
-//								.addLast(new HeartBeatHandler())
 								.addLast(new ProtocolDecoder(10 * 1024 * 1024))
 								.addLast(new ProtocolEncoder())
 								.addLast(new RpcClientHandler())
@@ -65,14 +60,14 @@ public class ConnectionObjectFactory extends BasePooledObjectFactory<Channel> {
 					}
 				}
 			});
-			Channel channel = f.channel();
-			String connStr = ip + ":" + port;
-//			channelMap.put(connStr, channel);
+			final Channel channel = f.channel();
 			channel.closeFuture().addListener(new ChannelFutureListener() {
 				public void operationComplete(ChannelFuture future) throws Exception {
-					Thread.sleep(1000);
-					LOGGER.info("Try to reconnect {} {}", ip, port);
-//					addNewChannel(serverIp + ":" + port);
+
+					LOGGER.info("Channel Close {} {}", ip, port);
+//					channel.connect(new InetSocketAddress(ip, port)).sync();
+//					ConnectionObjectFactory.this.destroyObject(ConnectionObjectFactory.this.wrap(channel));
+//					Thread.sleep(1000);
 				}
 			});
 			return channel;
@@ -80,6 +75,25 @@ public class ConnectionObjectFactory extends BasePooledObjectFactory<Channel> {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public Channel create() throws Exception {
+		return connectNewChannel();
+	}
+
+	@Override
+	public boolean validateObject(PooledObject<Channel> p) {
+		Channel object = p.getObject();
+		return object.isActive();
+	}
+
+	@Override
+	public void destroyObject(PooledObject<Channel> p) throws Exception {
+		p.getObject().close().addListener(new ChannelFutureListener() {
+			public void operationComplete(ChannelFuture future) throws Exception {
+				LOGGER.info("Close Finish");
+			}
+		});
 	}
 
 	public PooledObject<Channel> wrap(Channel obj) {

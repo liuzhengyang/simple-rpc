@@ -22,6 +22,7 @@ Running in some business online.
 # RoadMap
 * 服务心跳检测
 * 连接池
+* 断线重连 重写
 * 服务注册发布功能
 * 服务管理、监控
 * 服务调用日志链路跟踪
