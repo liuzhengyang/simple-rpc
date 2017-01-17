@@ -1,6 +1,5 @@
 package com.github.liuzhengyang.simplerpc;
 
-import com.github.liuzhengyang.simplerpc.core.RpcServer;
 import com.github.liuzhengyang.simplerpc.core.RpcServerWithLB;
 import org.springframework.beans.factory.FactoryBean;
 

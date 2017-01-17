@@ -1,6 +1,5 @@
 package com.github.liuzhengyang.simplerpc;
 
-import com.github.liuzhengyang.simplerpc.core.RpcClient;
 import com.github.liuzhengyang.simplerpc.core.RpcClientWithLB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

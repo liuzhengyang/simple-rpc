@@ -7,5 +7,8 @@ branches:
     - master
     - 3
     - 3.5
-before_install: 'mvn -version'
-install: 'mvn clean install -Pfull -DskipTests'
+before_install:
+  - 'mvn -version'
+  - sudo apt-get -qq update
+  - sudo apt-get install zookeeperd
+install: 'mvn clean install -Dmaven.test.skip=true --also-make-dependents'

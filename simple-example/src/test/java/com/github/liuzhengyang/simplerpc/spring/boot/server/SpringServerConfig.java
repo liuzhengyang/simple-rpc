@@ -1,15 +1,11 @@
 package com.github.liuzhengyang.simplerpc.spring.boot.server;
 
 import com.github.liuzhengyang.simplerpc.ServerFactoryBean;
-import com.github.liuzhengyang.simplerpc.core.RpcServer;
 import com.github.liuzhengyang.simplerpc.example.HelloImpl;
 import com.github.liuzhengyang.simplerpc.example.IHello;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.Resource;
 
 /**
  * Description:
@@ -24,6 +20,7 @@ public class SpringServerConfig {
 	public IHello hello() {
 		return new HelloImpl();
 	}
+
 	@Bean
 	public ServerFactoryBean serverFactoryBean() {
 		final ServerFactoryBean serverFactoryBean = new ServerFactoryBean();
@@ -33,7 +30,7 @@ public class SpringServerConfig {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					serverFactoryBean.getObject().init();
+					serverFactoryBean.getObject();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -41,6 +38,7 @@ public class SpringServerConfig {
 		}, "RpcServer").start();
 		return serverFactoryBean;
 	}
+
 	public static void main(String[] args) {
 		SpringApplication.run(SpringServerConfig.class);
 	}
