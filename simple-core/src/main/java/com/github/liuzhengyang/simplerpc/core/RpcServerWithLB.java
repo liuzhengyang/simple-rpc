@@ -150,6 +150,9 @@ public class RpcServerWithLB {
 
 	public void stop() {
 		unRegister();
+		if (curatorFramework != null) {
+			curatorFramework.close();
+		}
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 

@@ -21,16 +21,11 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,6 +47,7 @@ public class RpcClientWithLB {
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 	private String zkConn;
 	private int requestTimeoutMillis = 10 * 1000;
+	CuratorFramework curatorFramework;
 
 	// 存放字符串Channel对应的map
 	public static CopyOnWriteArrayList<ChannelWrapper> channelWrappers = new CopyOnWriteArrayList<ChannelWrapper>();
@@ -144,7 +140,7 @@ public class RpcClientWithLB {
 
 		// TODO 这段代码需要仔细检查重构整理
 		// 注册中心不可用时,保存本地缓存
-		CuratorFramework curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
+		curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
 
 
@@ -291,6 +287,9 @@ public class RpcClientWithLB {
 	}
 
 	public void destroy() {
+		if (curatorFramework != null) {
+			curatorFramework.close();
+		}
 		try {
 			for (ChannelWrapper cw : channelWrappers) {
 				cw.close();
