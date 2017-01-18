@@ -74,8 +74,8 @@ bio指的是传统的阻塞io，在Java中使用方式是Socket、ServerSocket�
 # 实现
 下面利用一些好用的框架帮助我们快速的实现一个RPC。 源代码在 *[simple-rpc](https://github.com/liuzhengyang/simple-rpc)*
 * netty 负责数据传输部分，netty作为异步事件驱动的高性能IO框架，使用方便久经考验，比手工编写nio代码方便不易出错。
-* protostuff 负责序列化和反序列化。google的 protobuf需要编写IDL文件然后生成，好处是能够生成各个语言的代码。但是开发起来很繁琐，使用protostuff免去编写IDL文件并生成的痛苦。
-
+* kryo或protostuff 负责序列化和反序列化。google的 protobuf需要编写IDL文件然后生成，好处是能够生成各个语言的代码并且优化的比较。但是开发起来很繁琐，每次都编写修改IDL文件并生成有些痛苦。
+* zookeeper是一个分布式协调框架，可以作为一些配置数据的协调同步等。在我们的RPC框架中用作注册中心用来提供服务的注册和服务发现功能。其他类似功能的有[consul](https://www.consul.io/)、etcd等,[这里](https://www.consul.io/intro/vs/zookeeper.html)有它们之间的比较
 
 ## 请求和返回的抽象
 ```
