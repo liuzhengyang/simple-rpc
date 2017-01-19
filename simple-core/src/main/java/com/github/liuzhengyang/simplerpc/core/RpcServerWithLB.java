@@ -29,7 +29,7 @@ import static com.github.liuzhengyang.simplerpc.common.Constants.ZK_BASE_PATH;
  * @version 1.0
  * @since 2016-12-15
  */
-public class RpcServerWithLB {
+public class RpcServerWithLB extends Server{
 	private static final Logger LOGGER = LoggerFactory.getLogger(RpcServerWithLB.class);
 
 	private String ip;
@@ -51,6 +51,12 @@ public class RpcServerWithLB {
 		this.serviceName = serviceName;
 	}
 
+	public RpcServerWithLB(int port, Object serviceImpl, String serviceName, String zkConn) {
+		this.port = port;
+		this.serviceImpl = serviceImpl;
+		this.serviceName = serviceName;
+		this.zkConn = zkConn;
+	}
 	public String getZkConn() {
 		return zkConn;
 	}
@@ -75,7 +81,8 @@ public class RpcServerWithLB {
 		this.channel = channel;
 	}
 
-	public void init() {
+	@Override
+	public void start() {
 		ServerBootstrap bootstrap = new ServerBootstrap();
 		bootstrap.group(bossGroup, workerGroup)
 				.channel(NioServerSocketChannel.class)
@@ -141,6 +148,7 @@ public class RpcServerWithLB {
 		}
 	}
 	private void unRegister() {
+		LOGGER.info("unRegister zookeeper");
 		try {
 			curatorFramework.delete().forPath(ZK_BASE_PATH + "/services/" + serviceName + "/" + ip + ":" + port);
 		} catch (Exception e) {
@@ -148,7 +156,9 @@ public class RpcServerWithLB {
 		}
 	}
 
-	public void stop() {
+	@Override
+	public void shutdown() {
+		LOGGER.info("Shutting down server {}", serviceName);
 		unRegister();
 		if (curatorFramework != null) {
 			curatorFramework.close();
@@ -157,4 +167,5 @@ public class RpcServerWithLB {
 		workerGroup.shutdownGracefully();
 
 	}
+
 }

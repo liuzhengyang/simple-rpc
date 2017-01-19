@@ -38,7 +38,7 @@ import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
  * @version 1.0
  * @since 2016-12-16
  */
-public class RpcClientWithLB {
+public class RpcClientWithLB extends Client{
 	private static final Logger LOGGER = LoggerFactory.getLogger(RpcClientWithLB.class);
 
 	private static AtomicLong atomicLong = new AtomicLong();
@@ -46,7 +46,7 @@ public class RpcClientWithLB {
 	private String serviceName;
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 	private String zkConn;
-	private int requestTimeoutMillis = 10 * 1000;
+	private int requestTimeoutMillis = 10 * 1000; // default 10seconds
 	CuratorFramework curatorFramework;
 
 	// 存放字符串Channel对应的map
@@ -272,7 +272,7 @@ public class RpcClientWithLB {
 		return channelWrappers.get(i);
 	}
 
-	public <T> T newProxy(final Class<T> serviceInterface) {
+	public <T> T proxyInterface(final Class<T> serviceInterface) {
 		// Fix JDK proxy  limitations and add other proxy implementation like cg-lib, spring proxy factory etc.
 		Object o = Proxy.newProxyInstance(RpcClientWithLB.class.getClassLoader(), new Class[]{serviceInterface}, new InvocationHandler() {
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -286,7 +286,7 @@ public class RpcClientWithLB {
 		return (T) o;
 	}
 
-	public void destroy() {
+	public void close() {
 		if (curatorFramework != null) {
 			curatorFramework.close();
 		}

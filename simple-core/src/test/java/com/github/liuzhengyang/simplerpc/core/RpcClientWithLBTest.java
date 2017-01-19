@@ -1,11 +1,8 @@
 package com.github.liuzhengyang.simplerpc.core;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * Description:
@@ -21,13 +18,13 @@ public class RpcClientWithLBTest {
 	public static void before() throws Exception{
 		rpcServer = new RpcServerWithLB(8180, new HelloImpl(), "hello");
 		rpcServer.setZkConn("127.0.0.1:2181");
-		rpcServer.init();
+		rpcServer.start();
 	}
 
 	@AfterClass
 	public static void destroy() {
 		if (rpcServer != null) {
-			rpcServer.stop();
+			rpcServer.shutdown();
 		}
 	}
 	@Test
@@ -35,7 +32,7 @@ public class RpcClientWithLBTest {
 		RpcClientWithLB rpcClientWithLB = new RpcClientWithLB("hello");
 		rpcClientWithLB.setZkConn("127.0.0.1:2181");
 		rpcClientWithLB.init();
-		IHello iHello = rpcClientWithLB.newProxy(IHello.class);
+		IHello iHello = rpcClientWithLB.proxyInterface(IHello.class);
 		for (int i = 0; i < 20; i++) {
 			Thread.sleep(100 * 5);
 			iHello.say("hello world");

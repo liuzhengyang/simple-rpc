@@ -28,11 +28,11 @@ public class ServerFactoryBean implements FactoryBean<Object> {
 	public void start() {
 		rpcServer = new RpcServerWithLB(port, serviceImpl, serviceName);
 		rpcServer.setZkConn(getZkConn());
-		rpcServer.init();
+		rpcServer.start();
 	}
 
 	public void destroy() {
-		rpcServer.stop();
+		rpcServer.shutdown();
 	}
 
 	public Class<?> getObjectType() {

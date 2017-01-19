@@ -2,8 +2,6 @@ package com.github.liuzhengyang.simplerpc.core;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 /**
  * Description:
  *
@@ -16,14 +14,14 @@ public class RpcServerWithLBTest {
 	public void init() throws Exception {
 		RpcServerWithLB rpcServer = new RpcServerWithLB(8182, new HelloImpl(), "hello");
 		rpcServer.setZkConn("127.0.0.1:2181");
-		rpcServer.init();
+		rpcServer.start();
 	}
 
 	@Test
 	public void init2() throws Exception {
 		RpcServerWithLB rpcServer = new RpcServerWithLB(8181, new HelloImpl(), "hello");
 		rpcServer.setZkConn("127.0.0.1:2181");
-		rpcServer.init();
+		rpcServer.start();
 	}
 
 }

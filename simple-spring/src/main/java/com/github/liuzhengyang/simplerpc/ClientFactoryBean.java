@@ -24,7 +24,7 @@ public class ClientFactoryBean<T> implements FactoryBean<T> {
 		rpcClient.setZkConn(zkConn);
 		rpcClient.init();
 
-		return rpcClient.newProxy(serviceInterface);
+		return rpcClient.proxyInterface(serviceInterface);
 	}
 
 	public Class<?> getObjectType() {
