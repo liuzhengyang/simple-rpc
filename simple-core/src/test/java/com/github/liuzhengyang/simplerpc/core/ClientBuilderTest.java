@@ -1,6 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class ClientBuilderTest {
 		IHello hello = ClientBuilder.<IHello>builder().zkConn("127.0.0.1:2181")
 				.serviceName("testBuilder").serviceInterface(IHello.class).build();
 		for (int i = 0; i < 5; i++) {
-			System.out.println(hello.say("Hello World!"));
+			Assert.assertEquals("return Hello World!", hello.say("Hello World!"));
 		}
 	}
 }
