@@ -8,6 +8,6 @@ package com.github.liuzhengyang.simplerpc.core;
  * @since 2017-01-19
  */
 public abstract class Server {
-	abstract void start();
-	abstract void shutdown();
+	public abstract void start();
+	public abstract void shutdown();
 }

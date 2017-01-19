@@ -1,6 +1,8 @@
 package com.github.liuzhengyang.simplerpc;
 
 import com.github.liuzhengyang.simplerpc.core.RpcServerWithLB;
+import com.github.liuzhengyang.simplerpc.core.Server;
+import com.github.liuzhengyang.simplerpc.core.ServerBuilder;
 import org.springframework.beans.factory.FactoryBean;
 
 /**
@@ -26,6 +28,10 @@ public class ServerFactoryBean implements FactoryBean<Object> {
 	}
 
 	public void start() {
+		Server build = ServerBuilder.builder().serviceImpl(serviceImpl)
+				.serviceName(serviceName)
+				.zkConn(zkConn).build();
+		build.start();
 		rpcServer = new RpcServerWithLB(port, serviceImpl, serviceName);
 		rpcServer.setZkConn(getZkConn());
 		rpcServer.start();

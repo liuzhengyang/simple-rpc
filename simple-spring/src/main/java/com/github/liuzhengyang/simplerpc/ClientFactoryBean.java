@@ -1,5 +1,6 @@
 package com.github.liuzhengyang.simplerpc;
 
+import com.github.liuzhengyang.simplerpc.core.ClientBuilder;
 import com.github.liuzhengyang.simplerpc.core.RpcClientWithLB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +21,10 @@ public class ClientFactoryBean<T> implements FactoryBean<T> {
 	private String zkConn;
 
 	public T getObject() {
-		RpcClientWithLB rpcClient = new RpcClientWithLB(serviceName);
-		rpcClient.setZkConn(zkConn);
-		rpcClient.init();
-
-		return rpcClient.proxyInterface(serviceInterface);
+		return ClientBuilder.<T>builder().zkConn(zkConn)
+				.serviceName(serviceName)
+				.serviceInterface(serviceInterface)
+				.build();
 	}
 
 	public Class<?> getObjectType() {
