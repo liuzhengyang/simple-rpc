@@ -24,7 +24,9 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Response>{
 	protected void channelRead0(ChannelHandlerContext ctx, Response msg) throws Exception {
 		LOGGER.info("Receive {}", msg);
 		BlockingQueue<Response> blockingQueue = responseMap.get(msg.getRequestId());
-		blockingQueue.put(msg);
+		if (blockingQueue != null) {
+			blockingQueue.put(msg);
+		}
 	}
 
 	@Override

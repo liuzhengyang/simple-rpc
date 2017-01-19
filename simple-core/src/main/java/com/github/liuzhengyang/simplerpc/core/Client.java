@@ -10,8 +10,6 @@ import java.io.IOException;
  * @since 2017-01-19
  */
 public abstract class Client {
-//	abstract void connect(String host, int port) throws IOException;
-//	abstract void connect();
-	abstract void close();
-	abstract <T> T proxyInterface(Class<T> serviceInterface);
+	public abstract void close();
+	public abstract <T> T proxyInterface(Class<T> serviceInterface);
 }
