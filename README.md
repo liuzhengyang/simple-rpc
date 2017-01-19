@@ -278,7 +278,7 @@ public class RpcServer {
     }
 }
 
-public class RpcServerHandler extends SimpleChannelInboundHandler<Request> {
+    public class RpcServerHandler extends SimpleChannelInboundHandler<Request> {
     private Object service;
 
     public RpcServerHandler(Object serviceImpl) {
@@ -304,7 +304,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Request> {
 
 ## 序列化部分
 ```
-public class Serializer {
+    public class Serializer {
     public static byte[] serialize(Object obj){
         RuntimeSchema schema = RuntimeSchema.createFrom(obj.getClass());
         LinkedBuffer buffer = LinkedBuffer.allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE);
@@ -334,7 +334,7 @@ public class Serializer {
 
 ```
 // 服务接口
-public interface IHello {
+    public interface IHello {
 `
     String say(String hello);
 
@@ -342,7 +342,7 @@ public interface IHello {
     int sum(Integer a, Integer b);
 }
 // 服务实现
-public class HelloImpl implements IHello {
+    public class HelloImpl implements IHello {
     public String say(String hello) {
         return "return " + hello;
     }
@@ -356,10 +356,30 @@ public class HelloImpl implements IHello {
     }
 
 }
+```
 
+## 直接使用
+```
+    Server testBuilder = ServerBuilder.builder()
+				.port(8998)
+				.zkConn("127.0.0.1:2181")
+				.serviceName("testBuilder")
+				.serviceImpl(new HelloImpl())
+				.build();
+		testBuilder.start();
+	IHello hello = ClientBuilder.<IHello>builder().zkConn("127.0.0.1:2181")
+    				.serviceName("testBuilder").serviceInterface(IHello.class).build();
+    		for (int i = 0; i < 5; i++) {
+    			System.out.println(hello.say("Hello World!"));
+    		}
+```
+
+
+## 和Spring 整合
+```
 // 客户端代码
 // beanJavaConfig方式
-@Bean
+    @Bean
     public CountService countService() {
         RpcClientWithLB rpcClientWithLB = new RpcClientWithLB("fyes-counter");
         rpcClientWithLB.setZkConn("127.0.0.1:2181");
@@ -370,7 +390,7 @@ public class HelloImpl implements IHello {
     
 // 服务端发布
 // xml配置方式
-<bean class="com.github.liuzhengyang.simplerpc.ServerFactoryBean" init-method="start">
+    <bean class="com.github.liuzhengyang.simplerpc.ServerFactoryBean" init-method="start">
         <property name="serviceInterface" value="com.test.liuzhengyang.CountService"/>
         <property name="port" value="8888"/>
         <property name="serviceName" value="fyes-counter"/>
