@@ -1,9 +1,10 @@
-# simple-rpc
+# simple-rpc - RPC with service discovery BASED ON NETTY
+========================================================
+
 
 [![Build Status](https://travis-ci.org/liuzhengyang/simple-rpc.svg?branch=master)](https://travis-ci.org/liuzhengyang/simple-rpc)
 
-RPC BASED ON NETTY
-Running in some business online. 
+Running in some online business. 
 
 # 内部结构
 * IO netty
