@@ -272,10 +272,32 @@ public class RpcClientWithLB extends Client{
 		return channelWrappers.get(i);
 	}
 
+	private static Method hashCodeMethod;
+	private static Method equalsMethod;
+	private static Method toStringMethod;
+
+	static {
+		try {
+			hashCodeMethod = Object.class.getMethod("hashCode");
+			equalsMethod = Object.class.getMethod("equals", Object.class);
+			toStringMethod = Object.class.getMethod("toString");
+		} catch (NoSuchMethodException e) {
+			throw new NoSuchMethodError(e.getMessage());
+		}
+	}
 	public <T> T proxyInterface(final Class<T> serviceInterface) {
 		// Fix JDK proxy  limitations and add other proxy implementation like cg-lib, spring proxy factory etc.
 		Object o = Proxy.newProxyInstance(RpcClientWithLB.class.getClassLoader(), new Class[]{serviceInterface}, new InvocationHandler() {
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				if (method.equals(hashCodeMethod)) {
+					return proxyHashCode(proxy);
+				}
+				if (method.equals(equalsMethod)) {
+					return proxyEquals(proxy, args[0]);
+				}
+				if (method.equals(toStringMethod)) {
+					return proxyToString(proxy);
+				}
 				try {
 					return sendMessage(serviceInterface, method, args).getResponse();
 				} catch (Exception e) {
@@ -284,6 +306,18 @@ public class RpcClientWithLB extends Client{
 			}
 		});
 		return (T) o;
+	}
+
+	private int proxyHashCode(Object proxy) {
+		return System.identityHashCode(proxy);
+	}
+
+	private boolean proxyEquals(Object proxy, Object other) {
+		return (proxy == other);
+	}
+
+	private String proxyToString(Object proxy) {
+		return proxy.getClass().getName() + '@' + Integer.toHexString(proxy.hashCode());
 	}
 
 	public void close() {
