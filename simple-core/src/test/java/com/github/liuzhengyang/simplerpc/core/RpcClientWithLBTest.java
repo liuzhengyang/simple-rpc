@@ -1,6 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -41,6 +42,16 @@ public class RpcClientWithLBTest {
 				before();
 			}
 		}
+	}
+
+	@Test
+	public void testProxy() {
+		IHello hello = ClientBuilder.<IHello>builder().zkConn("127.0.0.1:2181")
+				.serviceName("testBuilder").serviceInterface(IHello.class).build();
+		System.out.println(hello.toString());
+		Assert.assertFalse(hello.equals(1));
+		Assert.assertTrue(hello.equals(hello));
+		System.out.println(hello.hashCode());
 	}
 
 }
