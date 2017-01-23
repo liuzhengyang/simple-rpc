@@ -1,6 +1,6 @@
 package com.github.liuzhengyang.simplerpc.core.proxy;
 
-import com.github.liuzhengyang.simplerpc.core.Client;
+import com.github.liuzhengyang.simplerpc.core.transport.Client;
 
 /**
  * Description:

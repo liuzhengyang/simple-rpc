@@ -1,5 +1,6 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.bootstrap;
 
+import com.github.liuzhengyang.simplerpc.core.transport.ClientImpl;
 import com.google.common.base.Preconditions;
 
 /**
@@ -44,7 +45,7 @@ public class ClientBuilder<T> {
 		Preconditions.checkNotNull(serviceInterface);
 		Preconditions.checkNotNull(zkConn);
 		Preconditions.checkNotNull(serviceName);
-		RpcClientWithLB client = new RpcClientWithLB(this.serviceName);
+		ClientImpl client = new ClientImpl(this.serviceName);
 		client.setZkConn(this.zkConn);
 		client.setRequestTimeoutMillis(this.requestTimeoutMillis);
 		client.init();

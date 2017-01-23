@@ -1,10 +1,9 @@
 package com.github.liuzhengyang.simplerpc.core.codec;
 
-import com.github.liuzhengyang.simplerpc.api.Serializer;
+import com.github.liuzhengyang.simplerpc.serializer.Serializer;
 import com.github.liuzhengyang.simplerpc.serializer.KryoSerializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.MessageToByteEncoder;
 
 /**

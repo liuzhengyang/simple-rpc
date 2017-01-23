@@ -1,6 +1,5 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.transport;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 
 /**

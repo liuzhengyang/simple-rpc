@@ -1,4 +1,4 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.transport;
 
 import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
 import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
@@ -17,9 +17,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -28,8 +26,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
-
 /**
  * Description: 客户端代码
  *
@@ -37,8 +33,8 @@ import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
  * @version 1.0
  * @since 2016-12-16
  */
-public class RpcClientWithLB extends Client {
-	private static final Logger LOGGER = LoggerFactory.getLogger(RpcClientWithLB.class);
+public class ClientImpl extends Client {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ClientImpl.class);
 
 	private static AtomicLong atomicLong = new AtomicLong();
 	// 发布的服务名称,用来寻找对应的服务提供者
@@ -52,7 +48,7 @@ public class RpcClientWithLB extends Client {
 	// 存放字符串Channel对应的map
 	public static CopyOnWriteArrayList<ChannelWrapper> channelWrappers = new CopyOnWriteArrayList<ChannelWrapper>();
 
-	public RpcClientWithLB(String serviceName) {
+	public ClientImpl(String serviceName) {
 		this.serviceName = serviceName;
 	}
 
@@ -180,7 +176,7 @@ public class RpcClientWithLB extends Client {
 		try {
 			channel.writeAndFlush(request);
 			BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
-			responseMap.put(request.getRequestId(), blockingQueue);
+			ResponseHolder.responseMap.put(request.getRequestId(), blockingQueue);
 			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -190,7 +186,7 @@ public class RpcClientWithLB extends Client {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			responseMap.remove(request.getRequestId());
+			ResponseHolder.responseMap.remove(request.getRequestId());
 
 		}
 	}

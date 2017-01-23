@@ -1,7 +1,8 @@
 package com.github.liuzhengyang.simplerpc.core.proxy;
 
-import com.github.liuzhengyang.simplerpc.core.Client;
-import com.github.liuzhengyang.simplerpc.core.RpcClientWithLB;
+import com.github.liuzhengyang.simplerpc.core.transport.Client;
+import com.github.liuzhengyang.simplerpc.core.transport.ClientImpl;
+import com.github.liuzhengyang.simplerpc.exception.SimpleException;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -33,23 +34,23 @@ public class JdkClientProxy implements ClientProxy {
 	@Override
 	public <T> T proxyInterface(final Client client, final Class<T> serviceInterface) {
 		// Fix JDK proxy  limitations and add other proxy implementation like cg-lib, spring proxy factory etc.
-		Object proxyInstance = Proxy.newProxyInstance(RpcClientWithLB.class.getClassLoader(),
+		Object proxyInstance = Proxy.newProxyInstance(ClientImpl.class.getClassLoader(),
 				new Class[]{serviceInterface}, new InvocationHandler() {
 					public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-						if (method.equals(hashCodeMethod)) {
+						if (hashCodeMethod.equals(method)) {
 							return proxyHashCode(proxy);
 						}
-						if (method.equals(equalsMethod)) {
+						if (equalsMethod.equals(method)) {
 							return proxyEquals(proxy, args[0]);
 						}
-						if (method.equals(toStringMethod)) {
+						if (toStringMethod.equals(method)) {
 							return proxyToString(proxy);
 						}
 						try {
 							return client.sendMessage(serviceInterface, method, args).getResponse();
 						} catch (Exception e) {
 							// TODO RPC invoke exception handle
-							throw new RuntimeException(e);
+							throw new SimpleException(e);
 						}
 					}
 				});

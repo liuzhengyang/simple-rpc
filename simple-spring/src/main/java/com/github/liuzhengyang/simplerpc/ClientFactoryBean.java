@@ -1,7 +1,6 @@
 package com.github.liuzhengyang.simplerpc;
 
-import com.github.liuzhengyang.simplerpc.core.ClientBuilder;
-import com.github.liuzhengyang.simplerpc.core.RpcClientWithLB;
+import com.github.liuzhengyang.simplerpc.core.bootstrap.ClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;

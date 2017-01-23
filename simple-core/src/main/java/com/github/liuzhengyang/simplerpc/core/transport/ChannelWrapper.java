@@ -1,4 +1,4 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.transport;
 
 import com.github.liuzhengyang.simplerpc.core.pool.ConnectionObjectFactory;
 import io.netty.channel.Channel;
