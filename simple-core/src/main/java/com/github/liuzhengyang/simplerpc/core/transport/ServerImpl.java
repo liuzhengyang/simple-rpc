@@ -1,7 +1,8 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.transport;
 
 import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
 import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
+import com.github.liuzhengyang.simplerpc.core.handler.RpcServerHandler;
 import com.github.liuzhengyang.simplerpc.core.util.InetUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -29,8 +30,8 @@ import static com.github.liuzhengyang.simplerpc.common.Constants.ZK_BASE_PATH;
  * @version 1.0
  * @since 2016-12-15
  */
-public class RpcServerWithLB extends Server{
-	private static final Logger LOGGER = LoggerFactory.getLogger(RpcServerWithLB.class);
+public class ServerImpl extends Server{
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerImpl.class);
 
 	private String ip;
 	private int port;
@@ -45,13 +46,13 @@ public class RpcServerWithLB extends Server{
 	private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 	private CuratorFramework curatorFramework;
-	public RpcServerWithLB(int port, Object serviceImpl, String serviceName) {
+	public ServerImpl(int port, Object serviceImpl, String serviceName) {
 		this.port = port;
 		this.serviceImpl = serviceImpl;
 		this.serviceName = serviceName;
 	}
 
-	public RpcServerWithLB(int port, Object serviceImpl, String serviceName, String zkConn) {
+	public ServerImpl(int port, Object serviceImpl, String serviceName, String zkConn) {
 		this.port = port;
 		this.serviceImpl = serviceImpl;
 		this.serviceName = serviceName;

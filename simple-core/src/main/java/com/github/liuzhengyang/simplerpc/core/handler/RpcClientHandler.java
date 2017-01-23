@@ -1,5 +1,6 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.handler;
 
+import com.github.liuzhengyang.simplerpc.core.transport.Response;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -8,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.BlockingQueue;
 
-import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
+import static com.github.liuzhengyang.simplerpc.core.transport.ResponseHolder.responseMap;
 
 /**
  * Description:
@@ -22,7 +23,6 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Response>{
 	private static final Logger LOGGER = LoggerFactory.getLogger(RpcClientHandler.class);
 
 	protected void channelRead0(ChannelHandlerContext ctx, Response msg) throws Exception {
-		LOGGER.info("Receive {}", msg);
 		BlockingQueue<Response> blockingQueue = responseMap.get(msg.getRequestId());
 		if (blockingQueue != null) {
 			blockingQueue.put(msg);
@@ -33,6 +33,5 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Response>{
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		LOGGER.error("Exception caught on {}, ", ctx.channel(), cause);
 		ctx.channel().close();
-		// TODO retry reconnect
 	}
 }

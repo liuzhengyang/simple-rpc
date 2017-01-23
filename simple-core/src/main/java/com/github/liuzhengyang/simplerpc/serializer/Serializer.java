@@ -1,4 +1,4 @@
-package com.github.liuzhengyang.simplerpc.api;
+package com.github.liuzhengyang.simplerpc.serializer;
 
 /**
  * Description:

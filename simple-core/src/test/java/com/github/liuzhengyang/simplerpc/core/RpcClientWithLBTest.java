@@ -1,5 +1,8 @@
 package com.github.liuzhengyang.simplerpc.core;
 
+import com.github.liuzhengyang.simplerpc.core.bootstrap.ClientBuilder;
+import com.github.liuzhengyang.simplerpc.core.transport.ClientImpl;
+import com.github.liuzhengyang.simplerpc.core.transport.ServerImpl;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -13,11 +16,11 @@ import org.junit.Test;
  * @since 2017-01-10
  */
 public class RpcClientWithLBTest {
-	private static RpcServerWithLB rpcServer;
+	private static ServerImpl rpcServer;
 
 	@BeforeClass
 	public static void before() throws Exception{
-		rpcServer = new RpcServerWithLB(8180, new HelloImpl(), "hello");
+		rpcServer = new ServerImpl(8180, new HelloImpl(), "hello");
 		rpcServer.setZkConn("127.0.0.1:2181");
 		rpcServer.start();
 	}
@@ -30,7 +33,7 @@ public class RpcClientWithLBTest {
 	}
 	@Test
 	public void init() throws Exception {
-		RpcClientWithLB rpcClientWithLB = new RpcClientWithLB("hello");
+		ClientImpl rpcClientWithLB = new ClientImpl("hello");
 		rpcClientWithLB.setZkConn("127.0.0.1:2181");
 		rpcClientWithLB.init();
 		IHello iHello = rpcClientWithLB.proxyInterface(IHello.class);

@@ -1,13 +1,12 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.transport;
 
-import com.github.liuzhengyang.simplerpc.core.pool.ConnectionObjectFactory;
+import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
+import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
 import com.google.common.base.Splitter;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.GetChildrenBuilder;
@@ -18,9 +17,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -29,8 +26,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
-
 /**
  * Description: 客户端代码
  *
@@ -38,8 +33,8 @@ import static com.github.liuzhengyang.simplerpc.core.ResponseHolder.responseMap;
  * @version 1.0
  * @since 2016-12-16
  */
-public class RpcClientWithLB extends Client{
-	private static final Logger LOGGER = LoggerFactory.getLogger(RpcClientWithLB.class);
+public class ClientImpl extends Client {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ClientImpl.class);
 
 	private static AtomicLong atomicLong = new AtomicLong();
 	// 发布的服务名称,用来寻找对应的服务提供者
@@ -47,83 +42,13 @@ public class RpcClientWithLB extends Client{
 	private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(2);
 	private String zkConn;
 	private int requestTimeoutMillis = 10 * 1000; // default 10seconds
-	CuratorFramework curatorFramework;
+	private CuratorFramework curatorFramework;
+	private ClientProxy clientProxy;
 
 	// 存放字符串Channel对应的map
 	public static CopyOnWriteArrayList<ChannelWrapper> channelWrappers = new CopyOnWriteArrayList<ChannelWrapper>();
 
-	private static class ChannelWrapper {
-		private String connStr;
-		private String host;
-		private int ip;
-		private Channel channel;
-		private ObjectPool<Channel> channelObjectPool;
-
-		public ChannelWrapper(String host, int port) {
-			this.host = host;
-			this.ip = port;
-			this.connStr = host + ":" + ip;
-			channelObjectPool = new GenericObjectPool<Channel>(new ConnectionObjectFactory(host, port));
-		}
-
-		public String getConnStr() {
-			return connStr;
-		}
-
-		public void setConnStr(String connStr) {
-			this.connStr = connStr;
-		}
-
-		public Channel getChannel() {
-			return channel;
-		}
-
-		public void setChannel(Channel channel) {
-			this.channel = channel;
-		}
-
-		public void close() {
-			channelObjectPool.close();
-		}
-
-		public String getHost() {
-			return host;
-		}
-
-		public void setHost(String host) {
-			this.host = host;
-		}
-
-		public int getIp() {
-			return ip;
-		}
-
-		public void setIp(int ip) {
-			this.ip = ip;
-		}
-
-		public ObjectPool<Channel> getChannelObjectPool() {
-			return channelObjectPool;
-		}
-
-		public void setChannelObjectPool(ObjectPool<Channel> channelObjectPool) {
-			this.channelObjectPool = channelObjectPool;
-		}
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder("ChannelWrapper{");
-			sb.append("connStr='").append(connStr).append('\'');
-			sb.append(", host='").append(host).append('\'');
-			sb.append(", ip=").append(ip);
-			sb.append(", channel=").append(channel);
-			sb.append(", channelObjectPool=").append(channelObjectPool);
-			sb.append('}');
-			return sb.toString();
-		}
-	}
-
-	public RpcClientWithLB(String serviceName) {
+	public ClientImpl(String serviceName) {
 		this.serviceName = serviceName;
 	}
 
@@ -140,6 +65,7 @@ public class RpcClientWithLB extends Client{
 
 		// TODO 这段代码需要仔细检查重构整理
 		// 注册中心不可用时,保存本地缓存
+		// TODO 启动一个后台任务, 定期检查服务器列表g
 		curatorFramework = CuratorFrameworkFactory.newClient(getZkConn(), new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
 
@@ -215,6 +141,7 @@ public class RpcClientWithLB extends Client{
 		}
 	}
 
+	@Override
 	public Response sendMessage(Class<?> clazz, Method method, Object[] args) {
 		Request request = new Request();
 		request.setRequestId(atomicLong.incrementAndGet());
@@ -222,7 +149,9 @@ public class RpcClientWithLB extends Client{
 		request.setParams(args);
 		request.setClazz(clazz);
 		request.setParameterTypes(method.getParameterTypes());
+
 		ChannelWrapper channelWrapper = selectChannel();
+
 		if (channelWrapper == null) {
 			Response response = new Response();
 			RuntimeException runtimeException = new RuntimeException("Channel is not active now");
@@ -247,7 +176,7 @@ public class RpcClientWithLB extends Client{
 		try {
 			channel.writeAndFlush(request);
 			BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
-			responseMap.put(request.getRequestId(), blockingQueue);
+			ResponseHolder.responseMap.put(request.getRequestId(), blockingQueue);
 			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -257,7 +186,7 @@ public class RpcClientWithLB extends Client{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			responseMap.remove(request.getRequestId());
+			ResponseHolder.responseMap.remove(request.getRequestId());
 
 		}
 	}
@@ -272,52 +201,10 @@ public class RpcClientWithLB extends Client{
 		return channelWrappers.get(i);
 	}
 
-	private static Method hashCodeMethod;
-	private static Method equalsMethod;
-	private static Method toStringMethod;
-
-	static {
-		try {
-			hashCodeMethod = Object.class.getMethod("hashCode");
-			equalsMethod = Object.class.getMethod("equals", Object.class);
-			toStringMethod = Object.class.getMethod("toString");
-		} catch (NoSuchMethodException e) {
-			throw new NoSuchMethodError(e.getMessage());
-		}
-	}
 	public <T> T proxyInterface(final Class<T> serviceInterface) {
-		// Fix JDK proxy  limitations and add other proxy implementation like cg-lib, spring proxy factory etc.
-		Object o = Proxy.newProxyInstance(RpcClientWithLB.class.getClassLoader(), new Class[]{serviceInterface}, new InvocationHandler() {
-			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				if (method.equals(hashCodeMethod)) {
-					return proxyHashCode(proxy);
-				}
-				if (method.equals(equalsMethod)) {
-					return proxyEquals(proxy, args[0]);
-				}
-				if (method.equals(toStringMethod)) {
-					return proxyToString(proxy);
-				}
-				try {
-					return sendMessage(serviceInterface, method, args).getResponse();
-				} catch (Exception e) {
-					return null;
-				}
-			}
-		});
-		return (T) o;
-	}
-
-	private int proxyHashCode(Object proxy) {
-		return System.identityHashCode(proxy);
-	}
-
-	private boolean proxyEquals(Object proxy, Object other) {
-		return (proxy == other);
-	}
-
-	private String proxyToString(Object proxy) {
-		return proxy.getClass().getName() + '@' + Integer.toHexString(proxy.hashCode());
+		// default jdk proxy
+		clientProxy = new JdkClientProxy();
+		return clientProxy.proxyInterface(this, serviceInterface);
 	}
 
 	public void close() {
@@ -340,9 +227,5 @@ public class RpcClientWithLB extends Client{
 	public void setRequestTimeoutMillis(int requestTimeoutMillis) {
 		this.requestTimeoutMillis = requestTimeoutMillis;
 	}
-
-	// 启动一个后台任务, 定期检查服务器
-
-	// TODO add jvm shutdown hook
 
 }

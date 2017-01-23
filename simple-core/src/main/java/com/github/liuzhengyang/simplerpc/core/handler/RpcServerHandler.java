@@ -1,5 +1,7 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.handler;
 
+import com.github.liuzhengyang.simplerpc.core.transport.Request;
+import com.github.liuzhengyang.simplerpc.core.transport.Response;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;

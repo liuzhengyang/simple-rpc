@@ -1,5 +1,7 @@
-package com.github.liuzhengyang.simplerpc.core;
+package com.github.liuzhengyang.simplerpc.core.bootstrap;
 
+import com.github.liuzhengyang.simplerpc.core.transport.Server;
+import com.github.liuzhengyang.simplerpc.core.transport.ServerImpl;
 import com.google.common.base.Preconditions;
 
 /**
@@ -47,7 +49,7 @@ public class ServerBuilder {
 		Preconditions.checkNotNull(serviceName);
 		Preconditions.checkNotNull(zkConn);
 		Preconditions.checkArgument(port > 0);
-		RpcServerWithLB rpcServerWithLB = new RpcServerWithLB(this.port, this.serviceImpl, this.serviceName, this.zkConn);
+		ServerImpl rpcServerWithLB = new ServerImpl(this.port, this.serviceImpl, this.serviceName, this.zkConn);
 		return rpcServerWithLB;
 	}
 }

@@ -1,7 +1,6 @@
 package com.github.liuzhengyang.simplerpc.core;
 
-import com.github.liuzhengyang.simplerpc.api.Serializer;
-import com.github.liuzhengyang.simplerpc.serializer.*;
+import com.github.liuzhengyang.simplerpc.serializer.Serializer;
 import com.github.liuzhengyang.simplerpc.serializer.KryoSerializer;
 import org.junit.Test;
 
