@@ -1,6 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 /**
  * Description:
@@ -11,5 +12,8 @@ import java.io.IOException;
  */
 public abstract class Client {
 	public abstract void close();
+
+	public abstract Response sendMessage(Class<?> clazz, Method method, Object[] args);
+
 	public abstract <T> T proxyInterface(Class<T> serviceInterface);
 }
