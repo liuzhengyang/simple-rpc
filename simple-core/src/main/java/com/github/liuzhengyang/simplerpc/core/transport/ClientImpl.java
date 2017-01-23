@@ -2,6 +2,8 @@ package com.github.liuzhengyang.simplerpc.core.transport;
 
 import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
 import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
+import com.github.liuzhengyang.simplerpc.exception.RequestTimeoutException;
+import com.github.liuzhengyang.simplerpc.exception.SimpleException;
 import com.google.common.base.Splitter;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -178,8 +180,8 @@ public class ClientImpl extends Client {
 			BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 			ResponseHolder.responseMap.put(request.getRequestId(), blockingQueue);
 			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		} catch (InterruptedException e) {
+			throw new RequestTimeoutException("service" + serviceName + " method " + method + " timeout");
 		} finally {
 			try {
 				channelWrapper.getChannelObjectPool().returnObject(channel);
@@ -187,7 +189,6 @@ public class ClientImpl extends Client {
 				e.printStackTrace();
 			}
 			ResponseHolder.responseMap.remove(request.getRequestId());
-
 		}
 	}
 

@@ -8,6 +8,9 @@ package com.github.liuzhengyang.simplerpc.exception;
  * @since 2017-01-23
  */
 public class SimpleException extends RuntimeException{
+	public SimpleException() {
+	}
+
 	public SimpleException(String message) {
 		super(message);
 	}
