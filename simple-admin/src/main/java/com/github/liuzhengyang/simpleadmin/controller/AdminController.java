@@ -22,6 +22,8 @@ import java.util.List;
 @Controller
 public class AdminController {
 
+	private static final String ZK_PATH_PREFIX = "/simplerpc/services";
+
 	private CuratorFramework curatorFramework;
 
 	@PostConstruct
@@ -32,14 +34,14 @@ public class AdminController {
 
 	@RequestMapping("/index")
 	public String index(Model model) throws Exception {
-		List<String> services = curatorFramework.getChildren().forPath("/simplerpc/services");
+		List<String> services = curatorFramework.getChildren().forPath(ZK_PATH_PREFIX);
 		model.addAttribute("services", services);
 		return "index";
 	}
 
 	@RequestMapping("/index/{service}")
 	public String serviceDetail(@PathVariable("service") String service, Model model) throws Exception {
-		List<String> servers = curatorFramework.getChildren().forPath("/simplerpc/services/" + service);
+		List<String> servers = curatorFramework.getChildren().forPath(ZK_PATH_PREFIX + "/" + service);
 		model.addAttribute("servers", servers);
 		return "detail";
 	}
