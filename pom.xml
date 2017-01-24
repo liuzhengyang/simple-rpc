@@ -12,6 +12,7 @@
         <module>simple-core</module>
         <module>simple-example</module>
         <module>simple-spring</module>
+        <module>simpleadmin</module>
     </modules>
 
 

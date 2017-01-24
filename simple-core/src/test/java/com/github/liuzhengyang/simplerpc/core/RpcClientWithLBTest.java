@@ -37,6 +37,7 @@ public class RpcClientWithLBTest {
 		rpcClientWithLB.setZkConn("127.0.0.1:2181");
 		rpcClientWithLB.init();
 		IHello iHello = rpcClientWithLB.proxyInterface(IHello.class);
+		Thread.sleep(100000);
 		for (int i = 0; i < 20; i++) {
 			Thread.sleep(100 * 5);
 			iHello.say("hello world");
