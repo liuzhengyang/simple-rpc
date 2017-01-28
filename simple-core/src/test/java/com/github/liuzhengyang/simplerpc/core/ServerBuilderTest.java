@@ -22,7 +22,6 @@ public class ServerBuilderTest {
 				.serviceImpl(new HelloImpl())
 				.build();
 		testBuilder.start();
-		Thread.sleep(1000 * 3);
 		testBuilder.shutdown();
 	}
 
