@@ -398,3 +398,9 @@ public class RpcServer {
         <property name="zkConn" value="127.0.0.1:2181"/>
 
 ```
+
+## 管理后台
+有可视化的界面能够方便的查看服务状态
+当前实现了一个简版的管理后台
+![simple-admin](https://cloud.githubusercontent.com/assets/7070174/22396069/bf08c65a-e58a-11e6-8bcf-ada8ac769121.png)
+只需要运行ApplicationStarter中的main方法即可启动
