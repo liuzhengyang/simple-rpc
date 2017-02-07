@@ -1,5 +1,7 @@
 package com.github.liuzhengyang.simplerpc.core.bootstrap;
 
+import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
+import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
 import com.github.liuzhengyang.simplerpc.core.transport.ClientImpl;
 import com.google.common.base.Preconditions;
 
@@ -15,6 +17,7 @@ public class ClientBuilder<T> {
 	private String zkConn;
 	private Class<T> serviceInterface;
 	private int requestTimeoutMillis = 10000;
+	private Class<? extends ClientProxy> clientProxyClass = JdkClientProxy.class;
 
 	public static <T> ClientBuilder<T> builder() {
 		ClientBuilder<T> clientBuilder = new ClientBuilder<T>();
@@ -38,6 +41,11 @@ public class ClientBuilder<T> {
 
 	public ClientBuilder<T> requestTimeout(int requestTimeoutMillis) {
 		this.requestTimeoutMillis = requestTimeoutMillis;
+		return this;
+	}
+
+	public ClientBuilder<T> clientProxyClass(Class<? extends ClientProxy> clientProxyClass) {
+		this.clientProxyClass = clientProxyClass;
 		return this;
 	}
 

@@ -1,5 +1,6 @@
 package com.github.liuzhengyang.simplerpc.core.transport;
 
+import com.github.liuzhengyang.simplerpc.core.proxy.CglibClientProxy;
 import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
 import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
 import com.github.liuzhengyang.simplerpc.exception.RequestTimeoutException;
@@ -45,6 +46,7 @@ public class ClientImpl extends Client {
 	private String zkConn;
 	private int requestTimeoutMillis = 10 * 1000; // default 10seconds
 	private CuratorFramework curatorFramework;
+	private Class<? extends ClientProxy> clientProxyClass;
 	private ClientProxy clientProxy;
 
 	// 存放字符串Channel对应的map
@@ -204,7 +206,17 @@ public class ClientImpl extends Client {
 
 	public <T> T proxyInterface(final Class<T> serviceInterface) {
 		// default jdk proxy
-		clientProxy = new JdkClientProxy();
+//		clientProxy = new JdkClientProxy();
+		if (clientProxyClass == null) {
+			clientProxyClass = JdkClientProxy.class;
+		}
+		try {
+			clientProxy = clientProxyClass.newInstance();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
 		return clientProxy.proxyInterface(this, serviceInterface);
 	}
 
