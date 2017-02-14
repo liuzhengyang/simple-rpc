@@ -52,7 +52,9 @@ public class ConnectionObjectFactory extends BasePooledObjectFactory<Channel> {
 					}
 				});
 		try {
-			final ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000).connect(ip, port).sync();
+			final ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
+					.option(ChannelOption.TCP_NODELAY, true)
+					.connect(ip, port).sync();
 			f.addListener(new ChannelFutureListener() {
 				public void operationComplete(ChannelFuture future) throws Exception {
 					if (future.isSuccess()) {
