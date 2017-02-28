@@ -3,6 +3,8 @@ package com.github.liuzhengyang.simplerpc.core;
 import com.github.liuzhengyang.simplerpc.core.bootstrap.ClientBuilder;
 import com.github.liuzhengyang.simplerpc.core.bootstrap.ServerBuilder;
 import com.github.liuzhengyang.simplerpc.core.proxy.CglibClientProxy;
+import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
+import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
 import com.github.liuzhengyang.simplerpc.core.transport.Server;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -36,8 +38,17 @@ public class ClientBuilderTest {
 
 	@Test
 	public void testClientWithBuilder() {
+		proxyTest(null);
+	}
+	@Test
+	public void testJdkProxy() {
+		proxyTest(CglibClientProxy.class);
+		proxyTest(JdkClientProxy.class);
+	}
+
+	private void proxyTest(Class<? extends ClientProxy> proxyClass) {
 		IHello hello = ClientBuilder.<IHello>builder().zkConn("127.0.0.1:2181")
-				.serviceName("testBuilder").clientProxyClass(CglibClientProxy.class)
+				.serviceName("testBuilder").clientProxyClass(proxyClass)
 				.serviceInterface(IHello.class).build();
 		System.out.println(hello);
 		System.out.println(hello.toString());
