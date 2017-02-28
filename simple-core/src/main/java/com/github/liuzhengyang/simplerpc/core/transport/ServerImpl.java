@@ -4,6 +4,7 @@ import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
 import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
 import com.github.liuzhengyang.simplerpc.core.handler.RpcServerHandler;
 import com.github.liuzhengyang.simplerpc.core.util.InetUtil;
+import com.github.liuzhengyang.simplerpc.core.util.RegistryUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -21,8 +22,6 @@ import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.github.liuzhengyang.simplerpc.common.Constants.ZK_BASE_PATH;
-
 /**
  * Description:
  *
@@ -30,12 +29,12 @@ import static com.github.liuzhengyang.simplerpc.common.Constants.ZK_BASE_PATH;
  * @version 1.0
  * @since 2016-12-15
  */
-public class ServerImpl extends Server{
+public class ServerImpl extends Server {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ServerImpl.class);
 
 	private String ip;
 	private int port;
-	private boolean started = false;
+	private volatile boolean started = false;
 	private Channel channel;
 	private Object serviceImpl;
 	private String serviceName;
@@ -46,6 +45,7 @@ public class ServerImpl extends Server{
 	private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 	private CuratorFramework curatorFramework;
+
 	public ServerImpl(int port, Object serviceImpl, String serviceName) {
 		this.port = port;
 		this.serviceImpl = serviceImpl;
@@ -58,6 +58,7 @@ public class ServerImpl extends Server{
 		this.serviceName = serviceName;
 		this.zkConn = zkConn;
 	}
+
 	public String getZkConn() {
 		return zkConn;
 	}
@@ -115,7 +116,7 @@ public class ServerImpl extends Server{
 		String ipPortStr = ip + ":" + port;
 		curatorFramework = CuratorFrameworkFactory.newClient(zkConn, new ExponentialBackoffRetry(1000, 3));
 		curatorFramework.start();
-		String serviceBasePath = ZK_BASE_PATH + "/services/" + serviceName;
+		String serviceBasePath = RegistryUtil.getServicePath(serviceName);
 		try {
 			curatorFramework.create().creatingParentsIfNeeded().forPath(serviceBasePath);
 		} catch (Exception e) {
@@ -129,7 +130,7 @@ public class ServerImpl extends Server{
 
 		boolean registerSuccess = false;
 
-		while(!registerSuccess) {
+		while (!registerSuccess) {
 			try {
 				String s = curatorFramework.create().withMode(CreateMode.EPHEMERAL).forPath(serviceBasePath + "/" + ipPortStr);
 				registerSuccess = true;
@@ -148,10 +149,12 @@ public class ServerImpl extends Server{
 			}
 		}
 	}
+
 	private void unRegister() {
 		LOGGER.info("unRegister zookeeper");
 		try {
-			curatorFramework.delete().forPath(ZK_BASE_PATH + "/services/" + serviceName + "/" + ip + ":" + port);
+			String serviceInstancePath = RegistryUtil.getServiceInstancePath(serviceName, ip, port);
+			curatorFramework.delete().forPath(serviceInstancePath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -164,6 +167,7 @@ public class ServerImpl extends Server{
 		if (curatorFramework != null) {
 			curatorFramework.close();
 		}
+		started = false;
 		bossGroup.shutdownGracefully();
 		workerGroup.shutdownGracefully();
 

@@ -1,10 +1,9 @@
 package com.github.liuzhengyang.simplerpc.core.transport;
 
-import com.github.liuzhengyang.simplerpc.core.proxy.CglibClientProxy;
 import com.github.liuzhengyang.simplerpc.core.proxy.ClientProxy;
 import com.github.liuzhengyang.simplerpc.core.proxy.JdkClientProxy;
+import com.github.liuzhengyang.simplerpc.core.util.RegistryUtil;
 import com.github.liuzhengyang.simplerpc.exception.RequestTimeoutException;
-import com.github.liuzhengyang.simplerpc.exception.SimpleException;
 import com.google.common.base.Splitter;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -56,6 +55,13 @@ public class ClientImpl extends Client {
 		this.serviceName = serviceName;
 	}
 
+	public Class<? extends ClientProxy> getClientProxyClass() {
+		return clientProxyClass;
+	}
+
+	public void setClientProxyClass(Class<? extends ClientProxy> clientProxyClass) {
+		this.clientProxyClass = clientProxyClass;
+	}
 
 	public String getZkConn() {
 		return zkConn;
@@ -76,7 +82,7 @@ public class ClientImpl extends Client {
 
 		final GetChildrenBuilder children = curatorFramework.getChildren();
 		try {
-			final String serviceZKPath = "/simplerpc/services/" + serviceName;
+			final String serviceZKPath = RegistryUtil.getServicePath(serviceName);
 			PathChildrenCache pathChildrenCache = new PathChildrenCache(curatorFramework, serviceZKPath, true);
 			pathChildrenCache.start();
 			pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
@@ -183,7 +189,7 @@ public class ClientImpl extends Client {
 			ResponseHolder.responseMap.put(request.getRequestId(), blockingQueue);
 			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
-			throw new RequestTimeoutException("service" + serviceName + " method " + method + " timeout");
+			throw new RequestTimeoutException("service: " + serviceName + " metho:d " + method + " timeout exceed " + getRequestTimeoutMillis());
 		} finally {
 			try {
 				channelWrapper.getChannelObjectPool().returnObject(channel);

@@ -17,10 +17,10 @@ public class ProtocolEncoder extends MessageToByteEncoder<Object>{
 	private Serializer serializer = new KryoSerializer();
 
 	protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
-		byte[] bytes = serializer.serialize(msg);
-		int length = bytes.length;
+		byte[] serializedBytes = serializer.serialize(msg);
+		int length = serializedBytes.length;
 		out.writeInt(length);
-		out.writeBytes(bytes);
+		out.writeBytes(serializedBytes);
 	}
 
 }

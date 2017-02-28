@@ -55,6 +55,7 @@ public class ClientBuilder<T> {
 		Preconditions.checkNotNull(serviceName);
 		ClientImpl client = new ClientImpl(this.serviceName);
 		client.setZkConn(this.zkConn);
+		client.setClientProxyClass(clientProxyClass);
 		client.setRequestTimeoutMillis(this.requestTimeoutMillis);
 		client.init();
 		return client.proxyInterface(this.serviceInterface);

@@ -1,8 +1,8 @@
 package com.github.liuzhengyang.simplerpc.core.pool;
 
-import com.github.liuzhengyang.simplerpc.core.handler.RpcClientHandler;
 import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
 import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
+import com.github.liuzhengyang.simplerpc.core.handler.RpcClientHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Description:
+ * Description: Connection pool
  *
  * @author liuzhengyang
  * @version 1.0
