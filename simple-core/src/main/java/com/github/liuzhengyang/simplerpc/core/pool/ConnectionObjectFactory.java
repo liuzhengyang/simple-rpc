@@ -1,18 +1,13 @@
 package com.github.liuzhengyang.simplerpc.core.pool;
 
-import com.github.liuzhengyang.simplerpc.core.codec.ProtocolDecoder;
-import com.github.liuzhengyang.simplerpc.core.codec.ProtocolEncoder;
-import com.github.liuzhengyang.simplerpc.core.handler.RpcClientHandler;
+import com.github.liuzhengyang.simplerpc.core.handler.ClientChannelInitializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -42,45 +37,46 @@ public class ConnectionObjectFactory extends BasePooledObjectFactory<Channel> {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.channel(NioSocketChannel.class)
 				.group(new NioEventLoopGroup(1))
-				.handler(new ChannelInitializer<Channel>() {
-					protected void initChannel(Channel ch) throws Exception {
-						ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO))
-								.addLast(new ProtocolDecoder(10 * 1024 * 1024))
-								.addLast(new ProtocolEncoder())
-								.addLast(new RpcClientHandler())
-						;
-					}
-				});
+				.handler(new ClientChannelInitializer());
 		try {
 			final ChannelFuture f = bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
 					.option(ChannelOption.TCP_NODELAY, true)
 					.connect(ip, port).sync();
-			f.addListener(new ChannelFutureListener() {
-				public void operationComplete(ChannelFuture future) throws Exception {
-					if (future.isSuccess()) {
-						LOGGER.info("Connect success {} ", f);
-					}
-				}
-			});
 			final Channel channel = f.channel();
-			channel.closeFuture().addListener(new ChannelFutureListener() {
-				public void operationComplete(ChannelFuture future) throws Exception {
-
-					LOGGER.info("Channel Close {} {}", ip, port);
-//					channel.connect(new InetSocketAddress(ip, port)).sync();
-//					ConnectionObjectFactory.this.destroyObject(ConnectionObjectFactory.this.wrap(channel));
-//					Thread.sleep(1000);
-				}
-			});
+			addChannelListeners(f, channel);
 			return channel;
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			LOGGER.error("Interrupted", e);
+			Thread.currentThread().interrupt();
 		}
 		return null;
 	}
 
+	private void addChannelListeners(final ChannelFuture f, Channel channel) {
+		f.addListener(new ChannelFutureListener() {
+			public void operationComplete(ChannelFuture future) throws Exception {
+				if (future.isSuccess()) {
+					LOGGER.info("Connect success {} ", f);
+				}
+			}
+		});
+		channel.closeFuture().addListener(new ChannelFutureListener() {
+			public void operationComplete(ChannelFuture future) throws Exception {
+
+				LOGGER.info("Channel Close {} {}", ip, port);
+			}
+		});
+	}
+
 	public Channel create() throws Exception {
-		return connectNewChannel();
+		// retry 3 times to connection channel
+		for (int i = 0; i < 3; i++) {
+			Channel channel = connectNewChannel();
+			if (channel != null) {
+				return channel;
+			}
+		}
+		return null;
 	}
 
 	@Override
