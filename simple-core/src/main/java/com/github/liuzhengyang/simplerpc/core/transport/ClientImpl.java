@@ -187,7 +187,12 @@ public class ClientImpl extends Client {
 			channel.writeAndFlush(request);
 			BlockingQueue<Response> blockingQueue = new ArrayBlockingQueue<Response>(1);
 			ResponseHolder.responseMap.put(request.getRequestId(), blockingQueue);
-			return blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
+			Response response = blockingQueue.poll(requestTimeoutMillis, TimeUnit.MILLISECONDS);
+			if (response == null) {
+				throw new RequestTimeoutException("service: " + serviceName + " metho:d " + method + " timeout exceed " + getRequestTimeoutMillis());
+			} else {
+				return response;
+			}
 		} catch (InterruptedException e) {
 			throw new RequestTimeoutException("service: " + serviceName + " metho:d " + method + " timeout exceed " + getRequestTimeoutMillis());
 		} finally {

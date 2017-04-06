@@ -20,8 +20,7 @@ public class ServerBuilder {
 	private ServerBuilder() {}
 
 	public static ServerBuilder builder() {
-		ServerBuilder serverBuilder = new ServerBuilder();
-		return serverBuilder;
+		return new ServerBuilder();
 	}
 
 	public ServerBuilder port(int port) {
@@ -49,7 +48,6 @@ public class ServerBuilder {
 		Preconditions.checkNotNull(serviceName);
 		Preconditions.checkNotNull(zkConn);
 		Preconditions.checkArgument(port > 0);
-		ServerImpl rpcServerWithLB = new ServerImpl(this.port, this.serviceImpl, this.serviceName, this.zkConn);
-		return rpcServerWithLB;
+		return new ServerImpl(this.port, this.serviceImpl, this.serviceName, this.zkConn);
 	}
 }
