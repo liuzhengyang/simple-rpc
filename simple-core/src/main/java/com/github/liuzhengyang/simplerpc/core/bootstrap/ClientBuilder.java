@@ -20,8 +20,7 @@ public class ClientBuilder<T> {
 	private Class<? extends ClientProxy> clientProxyClass = JdkClientProxy.class;
 
 	public static <T> ClientBuilder<T> builder() {
-		ClientBuilder<T> clientBuilder = new ClientBuilder<T>();
-		return clientBuilder;
+		return new ClientBuilder<T>();
 	}
 
 	public ClientBuilder<T> serviceName(String serviceName) {
