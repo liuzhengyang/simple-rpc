@@ -4,7 +4,10 @@
 
 [![Build Status](https://travis-ci.org/liuzhengyang/simple-rpc.svg?branch=master)](https://travis-ci.org/liuzhengyang/simple-rpc)
 
-Running in some online business. 
+# Quick Start
+本地下载启动Zookeeper
+运行 ClientBuilderTest 创建测试服务端服务器并进行客户端调用
+
 
 # 内部结构
 * IO netty
