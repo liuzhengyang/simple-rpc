@@ -2,6 +2,12 @@ language: java
 jdk:
   - oraclejdk7
   - openjdk7
+  - oraclejdk8
+  - openjdk8
+addons:
+  hosts:
+    - simplerpc
+  hostname: simplerpc
 branches:
   only:
     - master
